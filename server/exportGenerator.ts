@@ -202,7 +202,7 @@ function generateHTMLContent(bookData: BookData, options: ExportOptions = { incl
   if (options.includeCover) {
     html += `
     <div class="cover-page">
-        ${bookData.coverImageUrl ? `<img src="${bookData.coverImageUrl}" alt="Book Cover" class="cover-image">` : ''}
+        ${bookData.coverImageUrl ? `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Book Cover" class="cover-image" style="display:none;">` : ''}
         <h1 class="cover-title">${bookData.title}</h1>
         ${bookData.subtitle ? `<h2 class="cover-subtitle">${bookData.subtitle}</h2>` : ''}
         <p class="cover-author">by ${bookData.author}</p>
@@ -269,7 +269,14 @@ export async function exportToPDF(bookData: BookData, options?: ExportOptions): 
   
   const browser = await puppeteer.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-extensions',
+      '--disable-gpu',
+      '--disable-features=VizDisplayCompositor'
+    ]
   });
   
   try {

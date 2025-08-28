@@ -16,7 +16,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/books", async (req, res) => {
     try {
       const bookData = insertBookSchema.parse(req.body);
-      const book = await storage.createBook(bookData);
+      
+      // Ensure default user exists
+      let user = await storage.getUserByUsername('temp-user');
+      if (!user) {
+        user = await storage.createUser({
+          username: 'temp-user',
+          email: 'temp@example.com',
+          password: 'temp-password'
+        });
+      }
+      
+      const book = await storage.createBook({
+        ...bookData,
+        userId: user.id
+      });
       res.json(book);
     } catch (error) {
       console.error('Book creation error:', error);

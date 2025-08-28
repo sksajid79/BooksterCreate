@@ -56,10 +56,7 @@ export class DatabaseStorage implements IStorage {
   async createBook(insertBook: InsertBook): Promise<Book> {
     const [book] = await db
       .insert(books)
-      .values({
-        ...insertBook,
-        updatedAt: new Date(),
-      })
+      .values(insertBook as any)
       .returning();
     return book;
   }
@@ -76,10 +73,7 @@ export class DatabaseStorage implements IStorage {
   async updateBook(id: string, updates: Partial<Book>): Promise<Book | undefined> {
     const [book] = await db
       .update(books)
-      .set({
-        ...updates,
-        updatedAt: new Date(),
-      })
+      .set(updates)
       .where(eq(books.id, id))
       .returning();
     return book || undefined;
@@ -87,17 +81,14 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBook(id: string): Promise<boolean> {
     const result = await db.delete(books).where(eq(books.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Chapter methods
   async createChapter(insertChapter: InsertChapter): Promise<Chapter> {
     const [chapter] = await db
       .insert(chapters)
-      .values({
-        ...insertChapter,
-        updatedAt: new Date(),
-      })
+      .values(insertChapter)
       .returning();
     return chapter;
   }
@@ -124,7 +115,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteChapter(id: string): Promise<boolean> {
     const result = await db.delete(chapters).where(eq(chapters.id, id));
-    return result.rowCount > 0;
+    return (result.rowCount || 0) > 0;
   }
 
   // Progress methods
