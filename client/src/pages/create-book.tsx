@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -24,6 +25,13 @@ const STEPS = [
 
 type CreationMethod = "ai" | "manual" | null;
 
+interface Chapter {
+  id: string;
+  title: string;
+  content: string;
+  isExpanded: boolean;
+}
+
 interface BookFormData {
   method: CreationMethod;
   author: string;
@@ -37,6 +45,7 @@ interface BookFormData {
   htmlDescription: string;
   keywords: string[];
   supportingContent: File | null;
+  chapters: Chapter[];
 }
 
 export default function CreateBook() {
@@ -53,7 +62,25 @@ export default function CreateBook() {
     language: "English (EN)",
     htmlDescription: "",
     keywords: [],
-    supportingContent: null
+    supportingContent: null,
+    chapters: [
+      {
+        id: "1",
+        title: "Understanding Teen Development",
+        content: `Raising a teenager can feel like navigating uncharted territory. The rapid physical, emotional, and cognitive changes they undergo often leave parents bewildered, frustrated, or even overwhelmed. However, understanding these developmental shifts is the first step toward fostering a strong, supportive relationship with your teen. This chapter delves into the science behind adolescent development, offering insights into why teens behave the way they do and how parents can respond effectively. By the biological transformations in their brains to the social pressures they face, we'll explore the complexities of this life phase and provide actionable strategies to help you guide your teen with confidence and empathy.
+
+The Physical Changes of Adolescence
+
+Adolescence is marked by some of the most dramatic physical changes a person will experience in their lifetime. Puberty triggers a surge of hormones, including testosterone and estrogen, which lead to the development of secondary sexual characteristics. These changes don't happen overnight—they unfold over several years, often at different rates for different teens, which can lead to self-consciousness or insecurity. For example, one 14-year-old might tower over their peers while another hasn't yet hit their growth spurt, creating social dynamics that parents should be mindful of. Additionally, the body's internal clock—the area responsible for decision-making and impulse control—is still developing, which explains why teens often act on emotion rather than logic. Sleep patterns also shift during adolescence, with many teens naturally inclined to stay up late and sleep in, a tendency driven by melatonin release delays. Understanding these physical changes can help parents approach conflicts—like battles over bedtime or frustration with impulsive decisions—with more patience and perspective.`,
+        isExpanded: true
+      },
+      {
+        id: "2", 
+        title: "Chapter 1: Building Trust and Open Communication",
+        content: `Trust and open communication form the bedrock of any strong parent-teen relationship. Without these elements, misunderstandings multiply, conflicts escalate, and the emotional distance between parent and child grows. This chapter provides practical strategies for creating an environment where your teenager feels safe to share their thoughts, concerns, and experiences without fear of judgment or immediate consequences. We'll explore how to listen actively, ask the right questions, and respond in ways that encourage honesty rather than defensiveness. Additionally, you'll learn how to establish boundaries that respect your teen's growing need for independence while maintaining the guidance they still require. From navigating difficult conversations about sensitive topics to rebuilding trust after it's been broken, this chapter equips you with the tools to foster meaningful dialogue and strengthen your connection with your teenager.`,
+        isExpanded: false
+      }
+    ]
   });
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
@@ -93,6 +120,29 @@ export default function CreateBook() {
     setFormData(prev => ({ 
       ...prev, 
       keywords: prev.keywords.filter((_, i) => i !== index) 
+    }));
+  };
+
+  const toggleChapter = (chapterId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      chapters: prev.chapters.map(chapter =>
+        chapter.id === chapterId
+          ? { ...chapter, isExpanded: !chapter.isExpanded }
+          : chapter
+      )
+    }));
+  };
+
+  const regenerateChapter = (chapterId: string) => {
+    // Simulate chapter regeneration
+    console.log(`Regenerating chapter ${chapterId}`);
+  };
+
+  const deleteChapter = (chapterId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      chapters: prev.chapters.filter(chapter => chapter.id !== chapterId)
     }));
   };
 
@@ -516,8 +566,151 @@ export default function CreateBook() {
           </div>
         )}
 
+        {/* Step 3: Chapters */}
+        {currentStep === 3 && (
+          <div className="space-y-8" data-testid="step-chapters">
+            {/* Success Alert */}
+            <Alert className="bg-green-50 border-green-200 text-green-800" data-testid="alert-chapters-generated">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertDescription>
+                <span className="font-medium">All chapters generated successfully!</span> Please review and revise the generated content and{" "}
+                <button className="underline hover:no-underline" data-testid="link-scroll-continue">
+                  scroll down to continue
+                </button>
+                .
+              </AlertDescription>
+            </Alert>
+
+            {/* Chapters List */}
+            <div className="space-y-4" data-testid="chapters-list">
+              {formData.chapters.map((chapter, index) => (
+                <Card key={chapter.id} className="border border-border" data-testid={`chapter-${chapter.id}`}>
+                  <div className="flex items-center justify-between p-4 border-b border-border">
+                    <div className="flex items-center space-x-3">
+                      <div className="cursor-move" data-testid={`chapter-drag-${chapter.id}`}>
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground" data-testid={`chapter-title-${chapter.id}`}>
+                          {chapter.title}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleChapter(chapter.id)}
+                        className="text-primary hover:text-primary/80"
+                        data-testid={`button-toggle-${chapter.id}`}
+                      >
+                        {chapter.isExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => regenerateChapter(chapter.id)}
+                        className="text-primary hover:text-primary/80"
+                        data-testid={`button-regenerate-${chapter.id}`}
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteChapter(chapter.id)}
+                        className="text-destructive hover:text-destructive/80"
+                        data-testid={`button-delete-${chapter.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {chapter.isExpanded && (
+                    <CardContent className="p-6">
+                      <div className="prose prose-sm max-w-none" data-testid={`chapter-content-${chapter.id}`}>
+                        {chapter.content.split('\n\n').map((paragraph, paragraphIndex) => {
+                          if (paragraph.trim().startsWith('The ') && paragraph.trim().includes('Changes')) {
+                            return (
+                              <h4 key={paragraphIndex} className="text-lg font-semibold mt-6 mb-3 text-foreground">
+                                {paragraph.trim()}
+                              </h4>
+                            );
+                          }
+                          return (
+                            <p key={paragraphIndex} className="text-muted-foreground leading-relaxed mb-4">
+                              {paragraph.trim()}
+                            </p>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-4 mt-6 border-t border-border">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleChapter(chapter.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                            data-testid={`button-collapse-${chapter.id}`}
+                          >
+                            <ChevronUp className="h-4 w-4 mr-1" />
+                            Collapse
+                          </Button>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleChapter(chapter.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                            data-testid={`button-expand-${chapter.id}`}
+                          >
+                            <ChevronDown className="h-4 w-4 mr-1" />
+                            Expand
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="chapters-navigation">
+              <Button 
+                variant="outline" 
+                onClick={handleBack}
+                data-testid="button-back-chapters"
+              >
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back
+              </Button>
+              
+              <Button
+                onClick={handleNext}
+                disabled={formData.chapters.length === 0}
+                data-testid="button-continue-chapters"
+              >
+                Continue to Template
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Coming Soon Steps */}
-        {currentStep > 2 && (
+        {currentStep > 3 && (
           <div className="text-center py-16" data-testid="coming-soon">
             <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <FileText className="w-12 h-12 text-primary" />
