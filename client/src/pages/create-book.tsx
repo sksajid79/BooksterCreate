@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -25,20 +26,34 @@ type CreationMethod = "ai" | "manual" | null;
 
 interface BookFormData {
   method: CreationMethod;
-  title: string;
-  description: string;
-  supportingContent: File | null;
   author: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  targetAudience: string;
+  toneStyle: string;
+  mission: string;
+  language: string;
+  htmlDescription: string;
+  keywords: string[];
+  supportingContent: File | null;
 }
 
 export default function CreateBook() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<BookFormData>({
     method: null,
+    author: "Sak Rahmi",
     title: "",
+    subtitle: "",
     description: "",
-    supportingContent: null,
-    author: ""
+    targetAudience: "",
+    toneStyle: "",
+    mission: "",
+    language: "English (EN)",
+    htmlDescription: "",
+    keywords: [],
+    supportingContent: null
   });
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
@@ -63,6 +78,22 @@ export default function CreateBook() {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0] || null;
     setFormData(prev => ({ ...prev, supportingContent: file }));
+  };
+
+  const handleKeywordAdd = (keyword: string) => {
+    if (keyword.trim() && !formData.keywords.includes(keyword.trim())) {
+      setFormData(prev => ({ 
+        ...prev, 
+        keywords: [...prev.keywords, keyword.trim()] 
+      }));
+    }
+  };
+
+  const handleKeywordRemove = (index: number) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      keywords: prev.keywords.filter((_, i) => i !== index) 
+    }));
   };
 
   return (
@@ -269,21 +300,32 @@ export default function CreateBook() {
         {/* Step 2: Details */}
         {currentStep === 2 && (
           <div className="space-y-8" data-testid="step-details">
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4">Book Details</h1>
-              <p className="text-xl text-muted-foreground">
-                Describe your book idea and upload any supporting content
-              </p>
-            </div>
-
             <Card>
               <CardContent className="p-8">
-                <div className="space-y-6">
+                <div className="space-y-8">
+                  {/* Selected Author */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-4" data-testid="heading-selected-author">Selected Author</h3>
+                    <div className="flex items-center space-x-4 p-4 border border-border rounded-lg bg-card">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <span className="text-primary font-medium text-lg">S</span>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-medium" data-testid="author-name">{formData.author}</div>
+                        <div className="text-sm text-muted-foreground">Style: Professional</div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        Tone: Professional
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Book Title */}
                   <div>
                     <Label htmlFor="book-title" className="text-base font-medium">Book Title</Label>
                     <Input
                       id="book-title"
-                      placeholder="Enter your book title"
+                      placeholder="Teen Parenting Simplified"
                       value={formData.title}
                       onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                       className="mt-2"
@@ -291,84 +333,182 @@ export default function CreateBook() {
                     />
                   </div>
 
+                  {/* Book Subtitle */}
                   <div>
-                    <Label htmlFor="book-description" className="text-base font-medium">Describe your book idea</Label>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Tell us about your book topic, who you want to reach, your target audience, or any specific content you want to include.
-                    </p>
+                    <Label htmlFor="book-subtitle" className="text-base font-medium">Book Subtitle (Optional)</Label>
+                    <Input
+                      id="book-subtitle"
+                      placeholder="A Practical Guide to Raising Happy, Healthy Teens with Confidence and Compassion"
+                      value={formData.subtitle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, subtitle: e.target.value }))}
+                      className="mt-2"
+                      data-testid="input-book-subtitle"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <Label htmlFor="book-description" className="text-base font-medium">Description</Label>
                     <Textarea
                       id="book-description"
-                      placeholder="Describe your book topic, who you want to reach, your target audience, or any specific content you want to include."
+                      placeholder="This book provides actionable advice and expert insights to help parents navigate the challenges of raising teenagers. From communication strategies to emotional support, it equips parents with the tools they need to foster strong, positive relationships with their teens."
                       value={formData.description}
                       onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      className="mt-2 min-h-32"
+                      className="mt-2 min-h-24"
                       data-testid="textarea-book-description"
                     />
                   </div>
 
+                  {/* Target Audience */}
                   <div>
-                    <Label className="text-base font-medium">Upload supporting content (optional)</Label>
-                    <div className="mt-2 border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors">
-                      <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-                      <input
-                        type="file"
-                        id="supporting-content"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                        accept=".pdf,.doc,.docx,.txt"
-                        data-testid="input-file-upload"
-                      />
-                      <label htmlFor="supporting-content" className="cursor-pointer">
-                        <Button variant="outline" className="mb-2" data-testid="button-choose-file">
-                          Choose File
-                        </Button>
-                        <p className="text-sm text-muted-foreground">
-                          Or drag and drop a file here
-                        </p>
-                      </label>
-                      {formData.supportingContent && (
-                        <p className="mt-2 text-sm text-primary" data-testid="text-uploaded-file">
-                          Uploaded: {formData.supportingContent.name}
-                        </p>
-                      )}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Upload a document or PDF which contains content you already have on your subject. The AI will use this to create your book.
-                    </p>
+                    <Label htmlFor="target-audience" className="text-base font-medium">Target Audience</Label>
+                    <Textarea
+                      id="target-audience"
+                      placeholder="Parents of teenagers, guardians, and caregivers seeking guidance on adolescent development and effective parenting techniques"
+                      value={formData.targetAudience}
+                      onChange={(e) => setFormData(prev => ({ ...prev, targetAudience: e.target.value }))}
+                      className="mt-2 min-h-20"
+                      data-testid="textarea-target-audience"
+                    />
                   </div>
 
+                  {/* Tone & Style */}
                   <div>
-                    <Label className="text-base font-medium">Based on text or url you can publish content related content...</Label>
-                    <div className="mt-4 p-4 bg-primary/5 rounded-lg">
-                      <Button 
-                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
-                        onClick={handleNext}
-                        disabled={!formData.title || !formData.description}
-                        data-testid="button-start-generating-book"
-                      >
-                        <Sparkles className="mr-2 w-5 h-5" />
-                        Start Generating Book (1x Credit)
-                      </Button>
+                    <Label htmlFor="tone-style" className="text-base font-medium">Tone & Style (Optional)</Label>
+                    <Textarea
+                      id="tone-style"
+                      placeholder="Professional, empathetic, and informative"
+                      value={formData.toneStyle}
+                      onChange={(e) => setFormData(prev => ({ ...prev, toneStyle: e.target.value }))}
+                      className="mt-2 min-h-16"
+                      data-testid="textarea-tone-style"
+                    />
+                  </div>
+
+                  {/* Mission */}
+                  <div>
+                    <Label htmlFor="mission" className="text-base font-medium">Mission (Optional)</Label>
+                    <Textarea
+                      id="mission"
+                      placeholder="To empower parents with the knowledge and skills needed to raise well-adjusted, confident teenagers in today's complex world"
+                      value={formData.mission}
+                      onChange={(e) => setFormData(prev => ({ ...prev, mission: e.target.value }))}
+                      className="mt-2 min-h-16"
+                      data-testid="textarea-mission"
+                    />
+                  </div>
+
+                  {/* Language */}
+                  <div>
+                    <Label htmlFor="language" className="text-base font-medium">Language</Label>
+                    <Select value={formData.language} onValueChange={(value) => setFormData(prev => ({ ...prev, language: value }))}>
+                      <SelectTrigger className="mt-2" data-testid="select-language">
+                        <SelectValue placeholder="Select language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="English (EN)">English (EN)</SelectItem>
+                        <SelectItem value="Spanish (ES)">Spanish (ES)</SelectItem>
+                        <SelectItem value="French (FR)">French (FR)</SelectItem>
+                        <SelectItem value="German (DE)">German (DE)</SelectItem>
+                        <SelectItem value="Italian (IT)">Italian (IT)</SelectItem>
+                        <SelectItem value="Portuguese (PT)">Portuguese (PT)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* HTML Book Description */}
+                  <div>
+                    <Label className="text-base font-medium">HTML Book Description (Optional)</Label>
+                    <div className="mt-2">
+                      {/* Rich Text Editor Toolbar */}
+                      <div className="border border-border rounded-t-lg bg-muted/30 p-2 flex items-center space-x-2" data-testid="rich-text-toolbar">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Underline className="h-4 w-4" />
+                        </Button>
+                        <div className="w-px h-6 bg-border"></div>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <AlignLeft className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Rich Text Content Area */}
+                      <div className="border border-t-0 border-border rounded-b-lg p-4 min-h-48 bg-background" data-testid="rich-text-content">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold">Teen Parenting Simplified: A Practical Guide to Raising Happy, Healthy Teens with Confidence and Compassion</h3>
+                          
+                          <p className="text-muted-foreground">
+                            Are you struggling to connect with your teenager? Do you feel overwhelmed by the challenges of parenting during these formative years? <em>Teen Parenting Simplified</em> is your go-to resource for navigating the ups and downs of adolescence with ease and confidence.
+                          </p>
+                          
+                          <p>In this comprehensive guide, Sak Rahmi offers practical advice, real-life examples, and expert strategies to help you:</p>
+                          
+                          <ul className="list-disc ml-6 space-y-1">
+                            <li>Improve communication and build trust with your teen</li>
+                            <li>Handle conflicts and emotional outbursts effectively</li>
+                            <li>Support your teen's mental and emotional well-being</li>
+                            <li>Set boundaries while fostering independence</li>
+                            <li>Prepare your teen for adulthood with life skills and resilience</li>
+                          </ul>
+                          
+                          <p>
+                            Whether you're a new parent to a teenager or looking to strengthen your existing relationship, this book provides the tools you need to create a loving, supportive home environment. <strong>Start your journey to confident teen parenting today!</strong>
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    
-                    <div className="mt-4 space-y-2 text-sm text-muted-foreground">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                        <span>AI generated, fast, inspiring, medicine, coffee, content</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                        <span>Choose your topic using AI framework</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                        <span>Design and create beautiful covers</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="w-1 h-1 bg-muted-foreground rounded-full"></div>
-                        <span>Professional formatting</span>
-                      </div>
+                  </div>
+
+                  {/* Keywords */}
+                  <div>
+                    <Label className="text-base font-medium">Keywords (Optional)</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-3" data-testid="keywords-grid">
+                      {[
+                        "teen parenting guide",
+                        "raising teenagers book",
+                        "parenting teens with confidence",
+                        "teen communication strategies",
+                        "adolescent emotional support",
+                        "positive parenting techniques",
+                        "teen mental health guide"
+                      ].map((keyword, index) => (
+                        <div key={index} className="flex items-center space-x-2 p-2 bg-muted rounded-lg">
+                          <span className="text-sm flex-1">{keyword}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleKeywordRemove(index)}
+                            data-testid={`button-remove-keyword-${index}`}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
                     </div>
+                  </div>
+
+                  {/* Next Step Button */}
+                  <div className="pt-6">
+                    <Button 
+                      className="w-full bg-primary text-primary-foreground hover:bg-primary/90"
+                      onClick={handleNext}
+                      disabled={!formData.title || !formData.description}
+                      data-testid="button-next-step"
+                    >
+                      Next Step
+                    </Button>
                   </div>
                 </div>
               </CardContent>
