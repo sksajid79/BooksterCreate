@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown } from "lucide-react";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -47,6 +47,7 @@ interface BookFormData {
   keywords: string[];
   supportingContent: File | null;
   chapters: Chapter[];
+  selectedTemplate: string;
 }
 
 export default function CreateBook() {
@@ -66,7 +67,8 @@ export default function CreateBook() {
     htmlDescription: "",
     keywords: [],
     supportingContent: null,
-    chapters: []
+    chapters: [],
+    selectedTemplate: "original"
   });
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
@@ -207,6 +209,112 @@ export default function CreateBook() {
       chapters: prev.chapters.filter(chapter => chapter.id !== chapterId)
     }));
   };
+
+  const handleTemplateSelect = (templateId: string) => {
+    setFormData(prev => ({ ...prev, selectedTemplate: templateId }));
+  };
+
+  // Template definitions
+  const templates = [
+    {
+      id: "original",
+      name: "Original Design",
+      description: "Use the original Bookster.cc layout",
+      icon: FileText,
+      isPremium: false,
+      preview: {
+        backgroundColor: "#ffffff",
+        textColor: "#1f2937",
+        fontSize: "16px",
+        fontFamily: "serif",
+        lineHeight: "1.6",
+        marginBottom: "1rem"
+      }
+    },
+    {
+      id: "modern",
+      name: "Modern",
+      description: "Clean and minimalist design with contemporary spacing",
+      icon: Sparkles,
+      isPremium: true,
+      preview: {
+        backgroundColor: "#f8fafc",
+        textColor: "#0f172a",
+        fontSize: "17px",
+        fontFamily: "sans-serif",
+        lineHeight: "1.7",
+        marginBottom: "1.5rem"
+      }
+    },
+    {
+      id: "creative",
+      name: "Creative",
+      description: "Playful design with artistic flourishes",
+      icon: Palette,
+      isPremium: true,
+      preview: {
+        backgroundColor: "#fef3c7",
+        textColor: "#92400e",
+        fontSize: "16px",
+        fontFamily: "serif",
+        lineHeight: "1.8",
+        marginBottom: "1.25rem"
+      }
+    },
+    {
+      id: "classic",
+      name: "Classic",
+      description: "A timeless, professional layout with elegant typography",
+      icon: Book,
+      isPremium: true,
+      preview: {
+        backgroundColor: "#fefefe",
+        textColor: "#374151",
+        fontSize: "15px",
+        fontFamily: "serif",
+        lineHeight: "1.65",
+        marginBottom: "1rem"
+      }
+    },
+    {
+      id: "business",
+      name: "Business",
+      description: "Professional template for business books",
+      icon: Briefcase,
+      isPremium: true,
+      preview: {
+        backgroundColor: "#f1f5f9",
+        textColor: "#1e293b",
+        fontSize: "16px",
+        fontFamily: "sans-serif",
+        lineHeight: "1.6",
+        marginBottom: "1.2rem"
+      }
+    },
+    {
+      id: "academic",
+      name: "Academic",
+      description: "Formal layout ideal for technical and academic works",
+      icon: GraduationCap,
+      isPremium: true,
+      preview: {
+        backgroundColor: "#ffffff",
+        textColor: "#111827",
+        fontSize: "14px",
+        fontFamily: "serif",
+        lineHeight: "1.75",
+        marginBottom: "1rem"
+      }
+    }
+  ];
+
+  // Get template style based on selected template
+  const getTemplateStyle = () => {
+    const template = templates.find(t => t.id === formData.selectedTemplate);
+    return template ? template.preview : templates[0].preview; // Default to original
+  };
+
+  const templateStyle = getTemplateStyle();
 
   return (
     <div className="min-h-screen bg-background" data-testid="create-book-page">
@@ -574,21 +682,45 @@ export default function CreateBook() {
 
                       {chapter.isExpanded && (
                         <CardContent className="p-6">
-                          <div className="prose prose-sm max-w-none" data-testid={`chapter-content-${chapter.id}`}>
+                          <div 
+                            className="prose prose-sm max-w-none" 
+                            data-testid={`chapter-content-${chapter.id}`}
+                            style={{
+                              backgroundColor: templateStyle.backgroundColor,
+                              color: templateStyle.textColor,
+                              fontSize: templateStyle.fontSize,
+                              fontFamily: templateStyle.fontFamily,
+                              lineHeight: templateStyle.lineHeight,
+                              padding: "1.5rem",
+                              borderRadius: "0.5rem",
+                              border: "1px solid #e5e7eb"
+                            }}
+                          >
                             {chapter.content.split('\n\n').map((paragraph, paragraphIndex) => {
                               if (paragraph.trim().startsWith('The ') && paragraph.trim().includes('Changes')) {
                                 return (
-                                  <h4 key={paragraphIndex} className="text-lg font-semibold mt-6 mb-3 text-foreground">
+                                  <h4 key={paragraphIndex} className="font-bold text-xl mt-6 mb-3" style={{ color: templateStyle.textColor }}>
                                     {paragraph.trim()}
                                   </h4>
                                 );
                               }
                               return (
-                                <p key={paragraphIndex} className="text-muted-foreground leading-relaxed mb-4">
+                                <p 
+                                  key={paragraphIndex} 
+                                  className="leading-relaxed" 
+                                  style={{ 
+                                    marginBottom: templateStyle.marginBottom,
+                                    color: templateStyle.textColor,
+                                    opacity: 0.9
+                                  }}
+                                >
                                   {paragraph.trim()}
                                 </p>
                               );
                             })}
+                            <div className="mt-4 pt-4 border-t border-gray-200 text-xs text-center opacity-75">
+                              Template: {templates.find(t => t.id === formData.selectedTemplate)?.name || "Original Design"}
+                            </div>
                           </div>
                         </CardContent>
                       )}
@@ -635,8 +767,142 @@ export default function CreateBook() {
           </div>
         )}
 
+        {/* Step 4: Template */}
+        {currentStep === 4 && (
+          <div className="space-y-8" data-testid="step-template">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Choose Your Template</h1>
+              <p className="text-xl text-muted-foreground">
+                Select a design template for your book
+              </p>
+            </div>
+
+            {/* Premium Banner */}
+            <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-4 rounded-lg text-center">
+              <div className="flex items-center justify-center space-x-2">
+                <Star className="w-5 h-5" />
+                <span className="font-medium">Unlock Premium Design Pack</span>
+              </div>
+            </div>
+
+            {/* Template Grid */}
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {templates.map((template) => {
+                const IconComponent = template.icon;
+                const isSelected = formData.selectedTemplate === template.id;
+                
+                return (
+                  <Card
+                    key={template.id}
+                    className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
+                      isSelected ? "border-primary bg-primary/5" : "border-border"
+                    } ${template.isPremium ? "relative" : ""}`}
+                    onClick={() => handleTemplateSelect(template.id)}
+                    data-testid={`template-${template.id}`}
+                  >
+                    {template.isPremium && (
+                      <div className="absolute top-3 right-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
+                        Premium
+                      </div>
+                    )}
+                    
+                    <CardContent className="p-6">
+                      <div className="text-center mb-4">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                          <IconComponent className="w-6 h-6 text-primary" />
+                        </div>
+                        <h3 className="font-semibold text-lg mb-2 flex items-center justify-center space-x-2">
+                          <span>{template.name}</span>
+                          {isSelected && <Check className="w-4 h-4 text-green-600" />}
+                        </h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {template.description}
+                        </p>
+                      </div>
+
+                      {/* Template Preview */}
+                      <div className="border border-border rounded-lg p-4 mb-4">
+                        <div 
+                          className="text-center space-y-2"
+                          style={{
+                            backgroundColor: template.preview.backgroundColor,
+                            color: template.preview.textColor,
+                            fontSize: template.preview.fontSize,
+                            fontFamily: template.preview.fontFamily,
+                            lineHeight: template.preview.lineHeight,
+                            padding: "1rem",
+                            borderRadius: "0.5rem"
+                          }}
+                        >
+                          <h4 className="font-bold text-lg">Understanding Teen Development</h4>
+                          <p className="text-sm" style={{ marginBottom: template.preview.marginBottom }}>
+                            Raising a teenager can feel like navigating uncharted territory. The rapid physical, emotional, and cognitive changes they undergo often leave parents bewildered...
+                          </p>
+                          <p className="text-xs opacity-75">Sample chapter content</p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* Selected Template Summary */}
+            {formData.selectedTemplate && (
+              <Card className="bg-green-50 border-green-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <div>
+                        <h3 className="font-semibold text-green-800">
+                          Template Selected: {templates.find(t => t.id === formData.selectedTemplate)?.name}
+                        </h3>
+                        <p className="text-sm text-green-700">
+                          {templates.find(t => t.id === formData.selectedTemplate)?.description}
+                        </p>
+                      </div>
+                    </div>
+                    {formData.chapters.length > 0 && (
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setCurrentStep(3)}
+                        className="bg-white"
+                        data-testid="button-preview-template"
+                      >
+                        Preview in Chapters
+                      </Button>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="template-navigation">
+              <Button 
+                variant="outline" 
+                onClick={handleBack}
+                data-testid="button-back-template"
+              >
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back to Chapters
+              </Button>
+              
+              <Button
+                onClick={handleNext}
+                disabled={!formData.selectedTemplate}
+                data-testid="button-continue-template"
+              >
+                Continue to Cover Design
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Coming Soon Steps */}
-        {currentStep > 3 && (
+        {currentStep > 4 && (
           <div className="text-center py-16" data-testid="coming-soon">
             <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <FileText className="w-12 h-12 text-primary" />
