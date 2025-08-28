@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye } from "lucide-react";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye, BookOpen, Code, Smartphone } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -1120,144 +1120,154 @@ export default function CreateBook() {
         {currentStep === 6 && (
           <div className="space-y-8" data-testid="step-export">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4">Export Your Book</h1>
+              <h1 className="text-3xl font-bold mb-4">Book Preview</h1>
               <p className="text-xl text-muted-foreground">
-                Download your completed e-book in various formats
+                Preview and export your completed e-book
               </p>
             </div>
 
-            {/* Book Preview */}
+            {/* Interactive Flipbook Preview */}
             <Card>
               <CardContent className="p-8">
-                <h3 className="text-lg font-semibold mb-6">Book Preview</h3>
-                <div className="grid md:grid-cols-2 gap-8">
-                  {/* Cover Preview */}
-                  <div>
-                    <h4 className="font-medium mb-4">Cover</h4>
-                    {formData.coverImageUrl ? (
-                      <div className="flex justify-center">
-                        <img
-                          src={formData.coverImageUrl}
-                          alt="Book Cover"
-                          className="max-w-48 max-h-64 object-contain rounded-lg shadow-md"
-                          data-testid="export-cover-preview"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center h-64 bg-muted/20 rounded-lg">
-                        <p className="text-muted-foreground">No cover image</p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Content Preview */}
-                  <div>
-                    <h4 className="font-medium mb-4">Content Summary</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <p className="font-medium">{formData.title}</p>
-                        {formData.subtitle && (
-                          <p className="text-sm text-muted-foreground">{formData.subtitle}</p>
-                        )}
-                        <p className="text-sm text-muted-foreground">by {formData.author}</p>
-                      </div>
-                      
-                      <div>
-                        <p className="text-sm font-medium mb-2">Template: {templates.find(t => t.id === formData.selectedTemplate)?.name}</p>
-                        <p className="text-sm font-medium mb-2">Chapters: {formData.chapters.length}</p>
-                        <p className="text-sm font-medium">Language: {formData.language}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-lg font-semibold mb-4">Interactive Flipbook Preview</h3>
+                <p className="text-muted-foreground mb-6">
+                  Preview your book in an interactive flipbook format. See how readers will experience your content with realistic page-turning effects.
+                </p>
+                
+                <Button 
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                  data-testid="button-open-flipbook"
+                >
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  Open Flipbook Preview
+                </Button>
               </CardContent>
             </Card>
 
-            {/* Export Options */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid="export-pdf">
-                <CardContent className="p-6 text-center">
-                  <FileText className="w-12 h-12 text-red-600 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">PDF Format</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Professional PDF ready for printing and digital distribution
-                  </p>
-                  <Button 
-                    className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => handleExport('pdf')}
-                    disabled={exportMutation.isPending}
-                    data-testid="button-export-pdf"
-                  >
-                    {exportMutation.isPending && exportMutation.variables?.format === 'pdf' ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download PDF
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+            {/* Manuscript Export */}
+            <div>
+              <h3 className="text-xl font-semibold mb-6">Manuscript Export</h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* DOCX Format */}
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <Edit className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                    <h4 className="font-semibold text-center mb-2">DOCX Format</h4>
+                    <p className="text-sm text-muted-foreground text-center mb-4">
+                      Best for publishing platforms like Amazon KDP and Google Books. Allows for easy editing and formatting adjustments in Microsoft Word.
+                    </p>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90"
+                      onClick={() => handleExport('docx')}
+                      disabled={exportMutation.isPending}
+                      data-testid="button-export-docx"
+                    >
+                      {exportMutation.isPending && exportMutation.variables?.format === 'docx' ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as DOCX
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
 
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid="export-epub">
-                <CardContent className="p-6 text-center">
-                  <Book className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">EPUB Format</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    E-book format compatible with most e-readers
-                  </p>
-                  <Button 
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-                    onClick={() => handleExport('epub')}
-                    disabled={exportMutation.isPending}
-                    data-testid="button-export-epub"
-                  >
-                    {exportMutation.isPending && exportMutation.variables?.format === 'epub' ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download EPUB
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+                {/* PDF Format */}
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <FileText className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                    <h4 className="font-semibold text-center mb-2">PDF Format</h4>
+                    <p className="text-sm text-muted-foreground text-center mb-4">
+                      Perfect for print-ready documents and digital distribution. Maintains exact formatting across all devices and platforms.
+                    </p>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90"
+                      onClick={() => handleExport('pdf')}
+                      disabled={exportMutation.isPending}
+                      data-testid="button-export-pdf"
+                    >
+                      {exportMutation.isPending && exportMutation.variables?.format === 'pdf' ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as PDF
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
 
-              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid="export-docx">
-                <CardContent className="p-6 text-center">
-                  <Edit className="w-12 h-12 text-blue-500 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Word Document</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Editable format for further customization
-                  </p>
-                  <Button 
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={() => handleExport('docx')}
-                    disabled={exportMutation.isPending}
-                    data-testid="button-export-docx"
-                  >
-                    {exportMutation.isPending && exportMutation.variables?.format === 'docx' ? (
-                      <>
-                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="w-4 h-4 mr-2" />
-                        Download DOCX
-                      </>
-                    )}
-                  </Button>
-                </CardContent>
-              </Card>
+                {/* EPUB Format */}
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <Smartphone className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                    <h4 className="font-semibold text-center mb-2">EPUB Format</h4>
+                    <p className="text-sm text-muted-foreground text-center mb-4">
+                      Perfect for e-readers like Kindle, Kobo, and Apple Books. Reflowable format that adapts to different screen sizes.
+                    </p>
+                    <Button 
+                      className="w-full bg-primary hover:bg-primary/90"
+                      onClick={() => handleExport('epub')}
+                      disabled={exportMutation.isPending}
+                      data-testid="button-export-epub"
+                    >
+                      {exportMutation.isPending && exportMutation.variables?.format === 'epub' ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="w-4 h-4 mr-2" />
+                          Export as EPUB
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Advanced Formats */}
+                <Card className="hover:shadow-lg transition-shadow">
+                  <CardContent className="p-6">
+                    <Code className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                    <h4 className="font-semibold text-center mb-2">Advanced Formats</h4>
+                    <p className="text-sm text-muted-foreground text-center mb-4">
+                      For developers and advanced users. Export in raw formats for custom processing.
+                    </p>
+                    <div className="space-y-2">
+                      <Button 
+                        variant="outline" 
+                        className="w-full text-xs"
+                        onClick={() => handleExport('markdown')}
+                        disabled={exportMutation.isPending}
+                        data-testid="button-export-markdown"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Export as Markdown
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="w-full text-xs"
+                        onClick={() => handleExport('html')}
+                        disabled={exportMutation.isPending}
+                        data-testid="button-export-html"
+                      >
+                        <Download className="w-3 h-3 mr-1" />
+                        Export as HTML
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             {/* Export Status */}
@@ -1279,37 +1289,58 @@ export default function CreateBook() {
               </Card>
             )}
 
-            {/* Additional Options */}
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-4">Export Options</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Include Cover Page</p>
-                      <p className="text-sm text-muted-foreground">Add the cover image as the first page</p>
+            {/* Cover Export */}
+            <div>
+              <h3 className="text-xl font-semibold mb-6">Cover Export</h3>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex flex-col md:flex-row items-start gap-6">
+                    {/* Cover Preview */}
+                    <div className="flex-shrink-0">
+                      {formData.coverImageUrl ? (
+                        <img
+                          src={formData.coverImageUrl}
+                          alt="Book Cover"
+                          className="w-32 h-48 object-cover rounded-lg shadow-md"
+                          data-testid="cover-export-preview"
+                        />
+                      ) : (
+                        <div className="w-32 h-48 bg-muted/20 rounded-lg flex items-center justify-center">
+                          <p className="text-xs text-muted-foreground text-center">No cover image</p>
+                        </div>
+                      )}
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" data-testid="option-include-cover" />
-                  </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Table of Contents</p>
-                      <p className="text-sm text-muted-foreground">Generate automatic chapter navigation</p>
+
+                    {/* Cover Export Options */}
+                    <div className="flex-grow">
+                      <h4 className="font-semibold mb-2">Cover Image</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Download your book cover in high resolution for use in marketing materials, online stores or on-demand platforms.
+                      </p>
+                      
+                      <div className="flex flex-wrap gap-3">
+                        <Button 
+                          className="bg-primary hover:bg-primary/90"
+                          disabled={!formData.coverImageUrl}
+                          data-testid="button-download-cover-jpg"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Cover (JPG)
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          disabled={!formData.coverImageUrl}
+                          data-testid="button-download-cover-png"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          PNG
+                        </Button>
+                      </div>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" data-testid="option-table-of-contents" />
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="font-medium">Page Numbers</p>
-                      <p className="text-sm text-muted-foreground">Add page numbers to the document</p>
-                    </div>
-                    <input type="checkbox" defaultChecked className="rounded" data-testid="option-page-numbers" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
 
             {/* Navigation */}
             <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="export-navigation">

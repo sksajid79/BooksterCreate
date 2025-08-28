@@ -70,10 +70,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Validate format
-      const validFormats = ['pdf', 'epub', 'docx'];
+      const validFormats = ['pdf', 'epub', 'docx', 'markdown', 'html'];
       if (!validFormats.includes(format.toLowerCase())) {
         return res.status(400).json({ 
-          error: "Invalid export format. Supported formats: PDF, EPUB, DOCX" 
+          error: "Invalid export format. Supported formats: PDF, EPUB, DOCX, Markdown, HTML" 
         });
       }
 
