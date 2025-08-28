@@ -227,7 +227,24 @@ upstream app {
 
 ### Common Issues
 
-1. **Port already in use:**
+1. **Build fails with "vite: not found" error:**
+```bash
+# The issue occurs when using --only=production during npm install
+# The fixed Dockerfile installs all dependencies first, builds, then prunes
+
+# To fix, ensure you're using the updated Dockerfile:
+docker-compose build --no-cache
+docker-compose up -d
+```
+
+2. **Alternative: Use optimized multi-stage build:**
+```bash
+# Use the optimized Dockerfile for production
+cp Dockerfile.optimized Dockerfile
+docker-compose build --no-cache
+```
+
+3. **Port already in use:**
 ```bash
 # Change port mapping in docker-compose.yml
 ports:
@@ -258,6 +275,18 @@ docker-compose exec app env | grep ANTHROPIC
 docker-compose down
 docker system prune -a
 docker-compose up --build
+
+# For persistent build issues, try multi-stage build:
+cp Dockerfile.optimized Dockerfile
+docker-compose build --no-cache --pull
+```
+
+5. **Node.js build dependencies missing:**
+```bash
+# Ensure your Dockerfile installs dev dependencies before building:
+# RUN npm ci  (not npm ci --only=production)
+# RUN npm run build
+# RUN npm prune --omit=dev
 ```
 
 ### Container Management
