@@ -6,6 +6,16 @@ This is a full-stack web application for AI-powered e-book creation called Books
 
 ## Recent Changes (January 2025)
 
+### Database Integration & Workflow Persistence (Latest)
+- **PostgreSQL Database** - Created comprehensive database schema with tables for users, books, chapters, bookProgress, and subscriptions
+- **Auto-Save Functionality** - Implemented automatic progress saving at each step of the book creation workflow
+- **Resume Capability** - Users can now save their progress and continue book creation later from any step
+- **Database Storage** - Replaced in-memory storage with PostgreSQL using Drizzle ORM for full data persistence
+- **Progress Tracking** - Step-by-step progress is saved with detailed metadata for each workflow stage
+- **Book Management** - Complete CRUD operations for books with chapter relationships
+- **Saving Indicators** - Visual feedback showing save status in the UI with loading and success states
+- **Database Schema** - Includes book metadata (title, author, description, etc.), chapter content, template selection, cover images, and progress tracking
+
 ### Template System Implementation
 - **Step 4: Template Selection** - Added comprehensive template system with 6 design options
 - **Live Template Previews** - Users can preview how text will look with different typography styles

@@ -55,6 +55,8 @@ interface BookFormData {
 export default function CreateBook() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
+  const [currentBookId, setCurrentBookId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<BookFormData>({
     method: null,
@@ -76,6 +78,63 @@ export default function CreateBook() {
   });
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
+
+  // Book creation and persistence mutations
+  const createBookMutation = useMutation({
+    mutationFn: async (bookData: any) => {
+      const response = await fetch('/api/books', {
+        method: 'POST',
+        body: JSON.stringify(bookData),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create book');
+      }
+      return response.json();
+    },
+    onSuccess: (book) => {
+      setCurrentBookId(book.id);
+    }
+  });
+
+  const updateBookMutation = useMutation({
+    mutationFn: async ({ bookId, updates }: { bookId: string, updates: any }) => {
+      const response = await fetch(`/api/books/${bookId}`, {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to update book');
+      }
+      return response.json();
+    }
+  });
+
+  const saveProgressMutation = useMutation({
+    mutationFn: async ({ bookId, stepName, stepData }: { bookId: string, stepName: string, stepData: any }) => {
+      const response = await fetch(`/api/books/${bookId}/progress`, {
+        method: 'POST',
+        body: JSON.stringify({
+          stepName,
+          stepData,
+          isCompleted: true,
+          completedAt: new Date().toISOString()
+        }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to save progress');
+      }
+      return response.json();
+    }
+  });
 
   const generateChaptersMutation = useMutation({
     mutationFn: async (bookDetails: any) => {
@@ -127,7 +186,71 @@ export default function CreateBook() {
     }
   });
 
+  // Auto-save function
+  const saveCurrentStep = async () => {
+    if (!currentBookId) return;
+    
+    setIsSaving(true);
+    try {
+      const stepName = STEPS[currentStep - 1]?.key;
+      let stepData = {};
+      
+      switch (stepName) {
+        case 'method':
+          stepData = { method: formData.method };
+          break;
+        case 'details':
+          stepData = {
+            title: formData.title,
+            subtitle: formData.subtitle,
+            author: formData.author,
+            description: formData.description,
+            targetAudience: formData.targetAudience,
+            toneStyle: formData.toneStyle,
+            mission: formData.mission,
+            language: formData.language,
+            htmlDescription: formData.htmlDescription,
+            keywords: formData.keywords
+          };
+          break;
+        case 'chapters':
+          stepData = { chapters: formData.chapters };
+          break;
+        case 'template':
+          stepData = { selectedTemplate: formData.selectedTemplate };
+          break;
+        case 'cover':
+          stepData = { coverImageUrl: formData.coverImageUrl };
+          break;
+      }
+      
+      await saveProgressMutation.mutateAsync({
+        bookId: currentBookId,
+        stepName,
+        stepData
+      });
+      
+      // Also update the main book record
+      await updateBookMutation.mutateAsync({
+        bookId: currentBookId,
+        updates: {
+          currentStep,
+          ...stepData
+        }
+      });
+    } catch (error) {
+      console.error('Failed to save progress:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleNext = async () => {
+    // Save current step progress before moving to next
+    if (currentBookId) {
+      await saveCurrentStep();
+    }
+    
     if (currentStep === 2 && formData.chapters.length === 0) {
       // Generate chapters when moving from Details to Chapters step
       setIsGeneratingChapters(true);
@@ -154,8 +277,25 @@ export default function CreateBook() {
     }
   };
 
-  const handleMethodSelect = (method: CreationMethod) => {
+  const handleMethodSelect = async (method: CreationMethod) => {
     setFormData(prev => ({ ...prev, method }));
+    
+    // Create new book record when method is selected
+    if (!currentBookId) {
+      try {
+        const bookData = {
+          userId: "temp-user-id", // In a real app, this would come from auth
+          creationMethod: method,
+          currentStep: 1,
+          status: "draft"
+        };
+        
+        await createBookMutation.mutateAsync(bookData);
+      } catch (error) {
+        console.error('Failed to create book:', error);
+      }
+    }
+    
     handleNext();
   };
 
@@ -429,7 +569,21 @@ export default function CreateBook() {
       <div className="bg-muted/30 border-b border-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="mb-4">
-            <Progress value={progressPercentage} className="h-2" data-testid="progress-bar" />
+            <div className="flex items-center justify-between mb-2">
+              <Progress value={progressPercentage} className="h-2 flex-1" data-testid="progress-bar" />
+              {(isSaving || createBookMutation.isPending || updateBookMutation.isPending) && (
+                <div className="ml-4 flex items-center text-sm text-muted-foreground">
+                  <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full mr-2"></div>
+                  Saving...
+                </div>
+              )}
+              {currentBookId && !isSaving && !createBookMutation.isPending && !updateBookMutation.isPending && (
+                <div className="ml-4 flex items-center text-sm text-green-600">
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Saved
+                </div>
+              )}
+            </div>
           </div>
           <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
             {STEPS.map((step, index) => (

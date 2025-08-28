@@ -3,18 +3,154 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateChapters, regenerateChapter } from "./anthropic.js";
 import { exportToPDF, exportToHTML, exportToMarkdown, exportToEPUB, exportToDOCX } from "./exportGenerator.js";
+import { insertBookSchema, insertChapterSchema, insertBookProgressSchema } from "@shared/schema";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // put application routes here
-  // prefix all routes with /api
-
-  // use storage to perform CRUD operations on the storage interface
-  // e.g. storage.insertUser(user) or storage.getUserByUsername(username)
-
   // Health check endpoint
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  // Book CRUD operations
+  app.post("/api/books", async (req, res) => {
+    try {
+      const bookData = insertBookSchema.parse(req.body);
+      const book = await storage.createBook(bookData);
+      res.json(book);
+    } catch (error) {
+      console.error('Book creation error:', error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Failed to create book" 
+      });
+    }
+  });
+
+  app.get("/api/books/:id", async (req, res) => {
+    try {
+      const book = await storage.getBook(req.params.id);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      // Get chapters and progress as well
+      const [chapters, progress] = await Promise.all([
+        storage.getBookChapters(book.id),
+        storage.getBookProgress(book.id)
+      ]);
+      
+      res.json({ ...book, chapters, progress });
+    } catch (error) {
+      console.error('Book fetch error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to fetch book" 
+      });
+    }
+  });
+
+  app.put("/api/books/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const book = await storage.updateBook(req.params.id, updates);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      res.json(book);
+    } catch (error) {
+      console.error('Book update error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to update book" 
+      });
+    }
+  });
+
+  app.get("/api/users/:userId/books", async (req, res) => {
+    try {
+      const books = await storage.getUserBooks(req.params.userId);
+      res.json(books);
+    } catch (error) {
+      console.error('User books fetch error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to fetch user books" 
+      });
+    }
+  });
+
+  // Progress tracking
+  app.post("/api/books/:bookId/progress", async (req, res) => {
+    try {
+      const progressData = insertBookProgressSchema.parse({
+        ...req.body,
+        bookId: req.params.bookId
+      });
+      const progress = await storage.saveProgress(progressData);
+      res.json(progress);
+    } catch (error) {
+      console.error('Progress save error:', error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Failed to save progress" 
+      });
+    }
+  });
+
+  app.get("/api/books/:bookId/progress", async (req, res) => {
+    try {
+      const progress = await storage.getBookProgress(req.params.bookId);
+      res.json(progress);
+    } catch (error) {
+      console.error('Progress fetch error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to fetch progress" 
+      });
+    }
+  });
+
+  // Chapter operations
+  app.post("/api/books/:bookId/chapters", async (req, res) => {
+    try {
+      const chapterData = insertChapterSchema.parse({
+        ...req.body,
+        bookId: req.params.bookId
+      });
+      const chapter = await storage.createChapter(chapterData);
+      res.json(chapter);
+    } catch (error) {
+      console.error('Chapter creation error:', error);
+      res.status(400).json({ 
+        error: error instanceof Error ? error.message : "Failed to create chapter" 
+      });
+    }
+  });
+
+  app.put("/api/chapters/:id", async (req, res) => {
+    try {
+      const updates = req.body;
+      const chapter = await storage.updateChapter(req.params.id, updates);
+      if (!chapter) {
+        return res.status(404).json({ error: "Chapter not found" });
+      }
+      res.json(chapter);
+    } catch (error) {
+      console.error('Chapter update error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to update chapter" 
+      });
+    }
+  });
+
+  app.delete("/api/chapters/:id", async (req, res) => {
+    try {
+      const deleted = await storage.deleteChapter(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Chapter not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Chapter deletion error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to delete chapter" 
+      });
+    }
   });
 
   // Generate chapters for a book
