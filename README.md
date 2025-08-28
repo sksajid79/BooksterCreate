@@ -216,6 +216,9 @@ docker-compose -f docker-compose.prod.yml up -d
 
 For detailed Docker deployment instructions, see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
+#### PDF Export Fix
+The Docker containers now include Chrome/Chromium for PDF generation. If PDF export fails, the system provides a fallback HTML file with browser conversion instructions. See [PUPPETEER_FIX.md](PUPPETEER_FIX.md) for troubleshooting.
+
 ### Option 3: Cloud Platform Deployment
 
 The application can be deployed to various cloud platforms:

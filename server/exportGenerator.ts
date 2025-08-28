@@ -265,9 +265,27 @@ export async function exportToPDF(bookData: BookData, options?: ExportOptions): 
   const fileName = `${bookData.title.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
   const filePath = path.join(EXPORT_DIR, fileName);
   
+  try {
+    // Try Puppeteer with enhanced configuration for different environments
+    return await generatePDFWithPuppeteer(bookData, filePath, options);
+  } catch (puppeteerError: any) {
+    console.warn('Puppeteer PDF generation failed, attempting fallback method:', puppeteerError?.message || puppeteerError);
+    
+    try {
+      // Fallback: Generate HTML and provide conversion instructions
+      return await generateHTMLForPDFConversion(bookData, options);
+    } catch (fallbackError: any) {
+      console.error('All PDF generation methods failed:', fallbackError?.message || fallbackError);
+      throw new Error(`PDF generation failed. Puppeteer error: ${puppeteerError?.message || puppeteerError}. Fallback error: ${fallbackError?.message || fallbackError}`);
+    }
+  }
+}
+
+async function generatePDFWithPuppeteer(bookData: BookData, filePath: string, options?: ExportOptions): Promise<string> {
   const htmlContent = generateHTMLContent(bookData, options);
   
-  const browser = await puppeteer.launch({
+  // Enhanced Puppeteer configuration for different environments
+  const puppeteerOptions = {
     headless: true,
     args: [
       '--no-sandbox',
@@ -275,13 +293,84 @@ export async function exportToPDF(bookData: BookData, options?: ExportOptions): 
       '--disable-dev-shm-usage',
       '--disable-extensions',
       '--disable-gpu',
-      '--disable-features=VizDisplayCompositor'
+      '--disable-features=VizDisplayCompositor',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor',
+      '--run-all-compositor-stages-before-draw',
+      '--disable-backgrounding-occluded-windows',
+      '--disable-renderer-backgrounding',
+      '--disable-field-trial-config',
+      '--disable-background-timer-throttling',
+      '--disable-background-networking',
+      '--disable-back-forward-cache',
+      '--disable-breakpad',
+      '--disable-client-side-phishing-detection',
+      '--disable-component-extensions-with-background-pages',
+      '--disable-default-apps',
+      '--disable-domain-reliability',
+      '--disable-extensions',
+      '--disable-features=AudioServiceOutOfProcess',
+      '--disable-hang-monitor',
+      '--disable-ipc-flooding-protection',
+      '--disable-popup-blocking',
+      '--disable-prompt-on-repost',
+      '--disable-sync',
+      '--disable-translate',
+      '--metrics-recording-only',
+      '--no-first-run',
+      '--no-default-browser-check',
+      '--password-store=basic',
+      '--use-mock-keychain'
     ]
-  });
+  };
+
+  // Try to use system Chrome first, then bundled Chromium
+  let browser;
+  try {
+    // For Docker and server environments, try to use bundled Chromium
+    browser = await puppeteer.launch(puppeteerOptions);
+  } catch (systemError) {
+    console.warn('System Chrome not found, trying bundled Chromium...');
+    // Try with explicit executable path for different environments
+    const possiblePaths = [
+      '/usr/bin/chromium-browser',
+      '/usr/bin/google-chrome',
+      '/opt/google/chrome/chrome',
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    ];
+    
+    for (const executablePath of possiblePaths) {
+      try {
+        await fs.access(executablePath);
+        browser = await puppeteer.launch({
+          ...puppeteerOptions,
+          executablePath
+        });
+        break;
+      } catch {
+        continue;
+      }
+    }
+    
+    if (!browser) {
+      throw new Error('No suitable Chrome/Chromium installation found');
+    }
+  }
   
   try {
     const page = await browser.newPage();
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    
+    // Set viewport and user agent for better compatibility
+    await page.setViewport({ width: 1200, height: 1600, deviceScaleFactor: 2 });
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    
+    await page.setContent(htmlContent, { 
+      waitUntil: 'networkidle0',
+      timeout: 30000 
+    });
+    
+    // Wait a bit more for any async content
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     await page.pdf({
       path: filePath,
@@ -292,13 +381,215 @@ export async function exportToPDF(bookData: BookData, options?: ExportOptions): 
         bottom: '1in',
         left: '1in',
         right: '1in'
-      }
+      },
+      timeout: 60000
     });
   } finally {
     await browser.close();
   }
   
+  return path.basename(filePath);
+}
+
+async function generateHTMLForPDFConversion(bookData: BookData, options?: ExportOptions): Promise<string> {
+  // Generate HTML file that can be opened in browser and printed to PDF
+  const fileName = `${bookData.title.replace(/[^a-zA-Z0-9]/g, '_')}_printable.html`;
+  const filePath = path.join(EXPORT_DIR, fileName);
+  
+  const htmlContent = generatePrintableHTMLContent(bookData, options);
+  await fs.writeFile(filePath, htmlContent, 'utf-8');
+  
   return fileName;
+}
+
+function generatePrintableHTMLContent(bookData: BookData, options?: ExportOptions): string {
+  const template = getTemplateStyles(bookData.selectedTemplate);
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${bookData.title}</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .page-break { page-break-before: always; }
+            .no-print { display: none; }
+        }
+        
+        body {
+            font-family: ${template.fontFamily};
+            font-size: ${template.fontSize};
+            line-height: ${template.lineHeight};
+            color: ${template.color};
+            background-color: ${template.backgroundColor};
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+        }
+        
+        .print-instructions {
+            background: #f0f9ff;
+            border: 1px solid #0284c7;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            font-family: sans-serif;
+        }
+        
+        .print-instructions h3 {
+            margin-top: 0;
+            color: #0284c7;
+        }
+        
+        .print-instructions ol {
+            margin: 10px 0;
+        }
+        
+        h1 { 
+            font-size: 2.5em; 
+            margin-bottom: 0.5em;
+            text-align: center;
+            page-break-after: avoid;
+        }
+        
+        h2 { 
+            font-size: 2em; 
+            margin-top: 2em;
+            margin-bottom: 1em;
+            page-break-after: avoid;
+        }
+        
+        h3 { 
+            font-size: 1.5em; 
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            page-break-after: avoid;
+        }
+        
+        .subtitle {
+            font-size: 1.2em;
+            color: #666;
+            text-align: center;
+            margin-bottom: 1em;
+        }
+        
+        .author {
+            text-align: center;
+            font-size: 1.1em;
+            margin-bottom: 2em;
+        }
+        
+        .chapter {
+            margin-bottom: 3em;
+            page-break-inside: avoid;
+        }
+        
+        .chapter-title {
+            border-bottom: 2px solid ${template.color};
+            padding-bottom: 0.5em;
+            margin-bottom: 1em;
+        }
+        
+        .cover-image {
+            text-align: center;
+            margin: 2em 0;
+        }
+        
+        .cover-image img {
+            max-width: 300px;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .table-of-contents {
+            page-break-after: always;
+            margin-bottom: 2em;
+        }
+        
+        .toc-item {
+            margin-bottom: 0.5em;
+            padding-left: 1em;
+        }
+        
+        .description {
+            font-style: italic;
+            margin: 2em 0;
+            padding: 1em;
+            background-color: rgba(0,0,0,0.05);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="print-instructions no-print">
+        <h3>📄 Convert to PDF Instructions</h3>
+        <p>Since automated PDF generation failed, please follow these steps to create your PDF:</p>
+        <ol>
+            <li><strong>Print this page:</strong> Press <kbd>Ctrl+P</kbd> (Windows/Linux) or <kbd>Cmd+P</kbd> (Mac)</li>
+            <li><strong>Choose "Save as PDF"</strong> as your printer destination</li>
+            <li><strong>Adjust settings:</strong>
+                <ul>
+                    <li>Paper size: A4 or Letter</li>
+                    <li>Margins: Default or Custom (1 inch all sides)</li>
+                    <li>Scale: 100% (Fit to page if needed)</li>
+                    <li>✅ Include background graphics</li>
+                </ul>
+            </li>
+            <li><strong>Save</strong> your PDF file</li>
+        </ol>
+        <p><em>This instruction box will not appear in the printed version.</em></p>
+    </div>
+
+    ${generateHTMLBookContent(bookData, options)}
+</body>
+</html>`;
+}
+
+function generateHTMLBookContent(bookData: BookData, options?: ExportOptions): string {
+  let content = '';
+  
+  // Cover page
+  if (options?.includeCover !== false) {
+    content += `
+    <div class="page-break">
+        <h1>${bookData.title}</h1>
+        ${bookData.subtitle ? `<div class="subtitle">${bookData.subtitle}</div>` : ''}
+        <div class="author">by ${bookData.author}</div>
+        ${bookData.coverImageUrl ? `
+        <div class="cover-image">
+            <img src="${bookData.coverImageUrl}" alt="Book Cover" />
+        </div>
+        ` : ''}
+        <div class="description">${bookData.description}</div>
+    </div>`;
+  }
+  
+  // Table of contents
+  if (options?.includeTableOfContents !== false) {
+    content += `
+    <div class="table-of-contents page-break">
+        <h2>Table of Contents</h2>
+        ${bookData.chapters.map((chapter, index) => `
+        <div class="toc-item">
+            Chapter ${index + 1}: ${chapter.title}
+        </div>
+        `).join('')}
+    </div>`;
+  }
+  
+  // Chapters
+  bookData.chapters.forEach((chapter, index) => {
+    content += `
+    <div class="chapter ${index > 0 ? 'page-break' : ''}">
+        <h2 class="chapter-title">Chapter ${index + 1}: ${chapter.title}</h2>
+        <div class="chapter-content">${marked(chapter.content)}</div>
+    </div>`;
+  });
+  
+  return content;
 }
 
 // Export as HTML
