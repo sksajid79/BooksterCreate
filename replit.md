@@ -19,6 +19,10 @@ This is a full-stack web application for AI-powered e-book creation called Books
 - **Export Options** - Include cover page, table of contents, and page numbering settings
 - **Export API** - Backend routes for handling PDF, EPUB, and DOCX export requests
 - **Loading States** - Export progress indicators with format-specific feedback
+- **exportGenerator.ts** - Complete backend implementation for all export formats
+- **File Generation** - Real PDF, EPUB, HTML, Markdown, and RTF file generation
+- **Template Styling** - Applied template styles carry through to exported documents
+- **Download System** - Automatic file download after successful export generation
 
 ### AI Integration
 - **Anthropic Claude API** - Integrated for chapter generation using claude-sonnet-4-20250514

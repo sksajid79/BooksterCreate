@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateChapters, regenerateChapter } from "./anthropic.js";
+import { exportToPDF, exportToHTML, exportToMarkdown, exportToEPUB, exportToDOCX } from "./exportGenerator.js";
+import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // put application routes here
@@ -77,10 +79,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // For now, return success response with download URL
-      // In a real implementation, you would generate the actual file
-      const fileName = `${bookData.title.replace(/[^a-zA-Z0-9]/g, '_')}.${format.toLowerCase()}`;
-      const downloadUrl = `/downloads/${fileName}`;
+      const exportOptions = {
+        includeCover: true,
+        includeTableOfContents: true,
+        includePageNumbers: true
+      };
+
+      let fileName: string;
+      
+      // Generate the actual file based on format
+      switch (format.toLowerCase()) {
+        case 'pdf':
+          fileName = await exportToPDF(bookData, exportOptions);
+          break;
+        case 'html':
+          fileName = await exportToHTML(bookData, exportOptions);
+          break;
+        case 'markdown':
+          fileName = await exportToMarkdown(bookData);
+          break;
+        case 'epub':
+          fileName = await exportToEPUB(bookData, exportOptions);
+          break;
+        case 'docx':
+          fileName = await exportToDOCX(bookData, exportOptions);
+          break;
+        default:
+          throw new Error(`Unsupported format: ${format}`);
+      }
+      
+      const downloadUrl = `/api/download/${fileName}`;
       
       res.json({ 
         success: true,
@@ -93,6 +121,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Export error:', error);
       res.status(500).json({ 
         error: error instanceof Error ? error.message : "Failed to export book" 
+      });
+    }
+  });
+
+  // Download exported files
+  app.get("/api/download/:fileName", async (req, res) => {
+    try {
+      const { fileName } = req.params;
+      const filePath = path.join(process.cwd(), 'exports', fileName);
+      
+      // Set appropriate headers for download
+      const ext = path.extname(fileName).toLowerCase();
+      let contentType = 'application/octet-stream';
+      
+      switch (ext) {
+        case '.pdf':
+          contentType = 'application/pdf';
+          break;
+        case '.html':
+          contentType = 'text/html';
+          break;
+        case '.md':
+          contentType = 'text/markdown';
+          break;
+        case '.epub':
+          contentType = 'application/epub+zip';
+          break;
+        case '.rtf':
+        case '.docx':
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          break;
+      }
+      
+      res.setHeader('Content-Type', contentType);
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      
+      res.download(filePath, fileName, (error) => {
+        if (error) {
+          console.error('Download error:', error);
+          if (!res.headersSent) {
+            res.status(404).json({ error: 'File not found' });
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Download error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to download file" 
       });
     }
   });

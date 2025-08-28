@@ -273,8 +273,16 @@ export default function CreateBook() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Show success message
+      // Show success message and trigger download
       alert(`${data.format} export completed! File: ${data.fileName}`);
+      
+      // Trigger download
+      const link = document.createElement('a');
+      link.href = data.downloadUrl;
+      link.download = data.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     },
     onError: (error) => {
       alert(`Export failed: ${error.message}`);
