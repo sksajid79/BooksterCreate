@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 import { Wand2, Play, ArrowRight } from "lucide-react";
 
 export default function HeroSection() {
@@ -32,15 +33,16 @@ export default function HeroSection() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-primary to-pink-500 text-white hover:opacity-90 transition-opacity shadow-lg"
-              onClick={scrollToBooksterMatic}
-              data-testid="button-start-creating"
-            >
-              Start Creating Now
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <Link href="/create-book">
+              <Button 
+                size="lg" 
+                className="bg-gradient-to-r from-primary to-pink-500 text-white hover:opacity-90 transition-opacity shadow-lg"
+                data-testid="button-start-creating"
+              >
+                Start Creating Now
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
             <Button variant="ghost" size="lg" data-testid="button-watch-demo">
               <Play className="mr-2 w-5 h-5" />
               Watch Demo

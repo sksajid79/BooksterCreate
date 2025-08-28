@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Link } from "wouter";
 import { Wand2, RefreshCw, Lightbulb } from "lucide-react";
 import SpinningWheel from "./spinning-wheel";
 
@@ -107,13 +108,15 @@ export default function BooksterOMatic() {
               {generatedPrompt}
             </div>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button 
-                className="flex-1 bg-gradient-to-r from-primary to-pink-500 text-white hover:opacity-90 transition-opacity"
-                data-testid="button-create-ebook"
-              >
-                <Wand2 className="mr-2 w-5 h-5" />
-                CREATE E-BOOK NOW
-              </Button>
+              <Link href="/create-book" className="flex-1">
+                <Button 
+                  className="w-full bg-gradient-to-r from-primary to-pink-500 text-white hover:opacity-90 transition-opacity"
+                  data-testid="button-create-ebook"
+                >
+                  <Wand2 className="mr-2 w-5 h-5" />
+                  CREATE E-BOOK NOW
+                </Button>
+              </Link>
               <Button 
                 variant="outline" 
                 onClick={spinAllWheels}

@@ -8,6 +8,7 @@ import Testimonials from "@/components/testimonials";
 import FAQSection from "@/components/faq-section";
 import Footer from "@/components/footer";
 import { Button } from "@/components/ui/button";
+import { Link } from "wouter";
 import { ArrowRight, Play, Shield } from "lucide-react";
 
 function CTASection() {
@@ -21,14 +22,16 @@ function CTASection() {
           Join thousands of authors who've transformed their knowledge into professional e-books
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button 
-            size="lg" 
-            className="bg-white text-primary hover:bg-gray-100 transition-colors shadow-lg"
-            data-testid="button-cta-start"
-          >
-            Start Creating Now
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Button>
+          <Link href="/create-book">
+            <Button 
+              size="lg" 
+              className="bg-white text-primary hover:bg-gray-100 transition-colors shadow-lg"
+              data-testid="button-cta-start"
+            >
+              Start Creating Now
+              <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
+          </Link>
           <Button variant="ghost" size="lg" className="text-white hover:text-white/80" data-testid="button-cta-demo">
             <Play className="mr-2 w-5 h-5" />
             Watch Demo

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Book, Menu, X } from "lucide-react";
+import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 
 export default function Navigation() {
@@ -55,7 +56,9 @@ export default function Navigation() {
           
           <div className="hidden md:flex items-center space-x-4">
             <Button variant="ghost" data-testid="button-signin">Sign In</Button>
-            <Button data-testid="button-start-creating">Start Creating</Button>
+            <Link href="/create-book">
+              <Button data-testid="button-start-creating">Start Creating</Button>
+            </Link>
           </div>
 
           <button 
@@ -76,7 +79,9 @@ export default function Navigation() {
               <button onClick={() => scrollToSection('faq')} className="text-left text-muted-foreground hover:text-foreground transition-colors">FAQ</button>
               <div className="flex flex-col space-y-2 pt-4">
                 <Button variant="ghost" className="justify-start">Sign In</Button>
-                <Button className="justify-start">Start Creating</Button>
+                <Link href="/create-book" className="w-full">
+                  <Button className="justify-start w-full">Start Creating</Button>
+                </Link>
               </div>
             </div>
           </div>
