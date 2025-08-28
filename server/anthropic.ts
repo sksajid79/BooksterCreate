@@ -24,6 +24,7 @@ interface BookDetails {
   toneStyle: string;
   mission: string;
   author: string;
+  numberOfChapters?: number;
 }
 
 interface Chapter {
@@ -45,7 +46,7 @@ Tone & Style: ${bookDetails.toneStyle}
 Mission: ${bookDetails.mission}
 Author: ${bookDetails.author}
 
-Please generate 6-8 chapters for this e-book. For each chapter, provide:
+Please generate ${bookDetails.numberOfChapters || 5} chapters for this e-book. For each chapter, provide:
 1. A compelling chapter title
 2. Detailed content (2-3 paragraphs minimum per chapter)
 3. Include practical advice, real-world examples, and actionable strategies

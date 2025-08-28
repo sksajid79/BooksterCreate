@@ -46,6 +46,7 @@ interface BookFormData {
   htmlDescription: string;
   keywords: string[];
   supportingContent: File | null;
+  numberOfChapters: number;
   chapters: Chapter[];
   selectedTemplate: string;
   coverImage: File | null;
@@ -71,6 +72,7 @@ export default function CreateBook() {
     htmlDescription: "",
     keywords: [],
     supportingContent: null,
+    numberOfChapters: 5,
     chapters: [],
     selectedTemplate: "original",
     coverImage: null,
@@ -210,7 +212,8 @@ export default function CreateBook() {
             mission: formData.mission,
             language: formData.language,
             htmlDescription: formData.htmlDescription,
-            keywords: formData.keywords
+            keywords: formData.keywords,
+            numberOfChapters: formData.numberOfChapters
           };
           break;
         case 'chapters':
@@ -261,7 +264,8 @@ export default function CreateBook() {
         targetAudience: formData.targetAudience,
         toneStyle: formData.toneStyle,
         mission: formData.mission,
-        author: formData.author
+        author: formData.author,
+        numberOfChapters: formData.numberOfChapters
       };
       generateChaptersMutation.mutate(bookDetails);
     }
@@ -813,6 +817,24 @@ export default function CreateBook() {
                         <SelectItem value="Portuguese (PT)">Portuguese (PT)</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  {/* Number of Chapters */}
+                  <div>
+                    <Label htmlFor="number-of-chapters" className="text-base font-medium">Number of Chapters</Label>
+                    <div className="mt-2">
+                      <Input
+                        id="number-of-chapters"
+                        type="number"
+                        min="3"
+                        max="20"
+                        value={formData.numberOfChapters}
+                        onChange={(e) => setFormData(prev => ({ ...prev, numberOfChapters: parseInt(e.target.value) || 5 }))}
+                        className="w-32"
+                        data-testid="input-number-of-chapters"
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">Choose between 3-20 chapters for your book</p>
+                    </div>
                   </div>
 
                   {/* Next Step Button */}
