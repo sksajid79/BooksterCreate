@@ -4,6 +4,10 @@
 
 This is a full-stack web application for AI-powered e-book creation called MyBookStore. The platform allows users to create professional e-books with AI-generated content and covers, featuring interactive book idea generation tools, subscription management, and publishing capabilities to platforms like Amazon KDP.
 
+## Installation & Deployment
+
+The application includes comprehensive documentation for self-hosting deployment in `README.md`. The platform supports multiple deployment options including traditional VPS, Docker containers, and cloud platforms. Complete setup instructions include database configuration, API key setup, and production deployment guidelines.
+
 ## Recent Changes (January 2025)
 
 ### Database Integration & Workflow Persistence (Latest)
