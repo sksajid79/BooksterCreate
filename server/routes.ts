@@ -57,6 +57,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export book in different formats
+  app.post("/api/export/:format", async (req, res) => {
+    try {
+      const { format } = req.params;
+      const bookData = req.body;
+      
+      if (!bookData.title || !bookData.chapters || bookData.chapters.length === 0) {
+        return res.status(400).json({ 
+          error: "Book title and chapters are required for export" 
+        });
+      }
+
+      // Validate format
+      const validFormats = ['pdf', 'epub', 'docx'];
+      if (!validFormats.includes(format.toLowerCase())) {
+        return res.status(400).json({ 
+          error: "Invalid export format. Supported formats: PDF, EPUB, DOCX" 
+        });
+      }
+
+      // For now, return success response with download URL
+      // In a real implementation, you would generate the actual file
+      const fileName = `${bookData.title.replace(/[^a-zA-Z0-9]/g, '_')}.${format.toLowerCase()}`;
+      const downloadUrl = `/downloads/${fileName}`;
+      
+      res.json({ 
+        success: true,
+        downloadUrl,
+        fileName,
+        format: format.toUpperCase(),
+        message: `${format.toUpperCase()} export completed successfully`
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to export book" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;

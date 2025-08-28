@@ -243,6 +243,48 @@ export default function CreateBook() {
     }));
   };
 
+  // Export mutations
+  const exportMutation = useMutation({
+    mutationFn: async ({ format }: { format: string }) => {
+      const exportData = {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        author: formData.author,
+        description: formData.description,
+        chapters: formData.chapters,
+        selectedTemplate: formData.selectedTemplate,
+        coverImageUrl: formData.coverImageUrl,
+        language: formData.language
+      };
+
+      const response = await fetch(`/api/export/${format}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(exportData),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Export failed');
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Show success message
+      alert(`${data.format} export completed! File: ${data.fileName}`);
+    },
+    onError: (error) => {
+      alert(`Export failed: ${error.message}`);
+    }
+  });
+
+  const handleExport = (format: string) => {
+    exportMutation.mutate({ format });
+  };
+
   // Template definitions
   const templates = [
     {
@@ -1140,9 +1182,23 @@ export default function CreateBook() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Professional PDF ready for printing and digital distribution
                   </p>
-                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download PDF
+                  <Button 
+                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => handleExport('pdf')}
+                    disabled={exportMutation.isPending}
+                    data-testid="button-export-pdf"
+                  >
+                    {exportMutation.isPending && exportMutation.variables?.format === 'pdf' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download PDF
+                      </>
+                    )}
                   </Button>
                 </CardContent>
               </Card>
@@ -1154,9 +1210,23 @@ export default function CreateBook() {
                   <p className="text-sm text-muted-foreground mb-4">
                     E-book format compatible with most e-readers
                   </p>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download EPUB
+                  <Button 
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    onClick={() => handleExport('epub')}
+                    disabled={exportMutation.isPending}
+                    data-testid="button-export-epub"
+                  >
+                    {exportMutation.isPending && exportMutation.variables?.format === 'epub' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download EPUB
+                      </>
+                    )}
                   </Button>
                 </CardContent>
               </Card>
@@ -1168,13 +1238,46 @@ export default function CreateBook() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Editable format for further customization
                   </p>
-                  <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download DOCX
+                  <Button 
+                    className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() => handleExport('docx')}
+                    disabled={exportMutation.isPending}
+                    data-testid="button-export-docx"
+                  >
+                    {exportMutation.isPending && exportMutation.variables?.format === 'docx' ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="w-4 h-4 mr-2" />
+                        Download DOCX
+                      </>
+                    )}
                   </Button>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Export Status */}
+            {exportMutation.isPending && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center space-x-3">
+                    <RefreshCw className="w-6 h-6 text-blue-600 animate-spin" />
+                    <div>
+                      <h3 className="font-semibold text-blue-800">
+                        Generating {exportMutation.variables?.format?.toUpperCase()} Export...
+                      </h3>
+                      <p className="text-sm text-blue-700">
+                        Please wait while we prepare your book for download
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Additional Options */}
             <Card>
@@ -1186,7 +1289,7 @@ export default function CreateBook() {
                       <p className="font-medium">Include Cover Page</p>
                       <p className="text-sm text-muted-foreground">Add the cover image as the first page</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input type="checkbox" defaultChecked className="rounded" data-testid="option-include-cover" />
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -1194,7 +1297,7 @@ export default function CreateBook() {
                       <p className="font-medium">Table of Contents</p>
                       <p className="text-sm text-muted-foreground">Generate automatic chapter navigation</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input type="checkbox" defaultChecked className="rounded" data-testid="option-table-of-contents" />
                   </div>
                   
                   <div className="flex items-center justify-between">
@@ -1202,7 +1305,7 @@ export default function CreateBook() {
                       <p className="font-medium">Page Numbers</p>
                       <p className="text-sm text-muted-foreground">Add page numbers to the document</p>
                     </div>
-                    <input type="checkbox" defaultChecked className="rounded" />
+                    <input type="checkbox" defaultChecked className="rounded" data-testid="option-page-numbers" />
                   </div>
                 </div>
               </CardContent>

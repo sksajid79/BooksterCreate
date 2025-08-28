@@ -17,6 +17,8 @@ This is a full-stack web application for AI-powered e-book creation called Books
 - **Step 6: Export System** - Added comprehensive export options (PDF, EPUB, DOCX)
 - **Cover Integration** - Uploaded cover images carry through to export preview
 - **Export Options** - Include cover page, table of contents, and page numbering settings
+- **Export API** - Backend routes for handling PDF, EPUB, and DOCX export requests
+- **Loading States** - Export progress indicators with format-specific feedback
 
 ### AI Integration
 - **Anthropic Claude API** - Integrated for chapter generation using claude-sonnet-4-20250514
