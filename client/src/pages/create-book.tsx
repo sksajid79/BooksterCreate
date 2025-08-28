@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap } from "lucide-react";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -48,6 +48,8 @@ interface BookFormData {
   supportingContent: File | null;
   chapters: Chapter[];
   selectedTemplate: string;
+  coverImage: File | null;
+  coverImageUrl: string | null;
 }
 
 export default function CreateBook() {
@@ -68,7 +70,9 @@ export default function CreateBook() {
     keywords: [],
     supportingContent: null,
     chapters: [],
-    selectedTemplate: "original"
+    selectedTemplate: "original",
+    coverImage: null,
+    coverImageUrl: null
   });
 
   const progressPercentage = (currentStep / STEPS.length) * 100;
@@ -212,6 +216,31 @@ export default function CreateBook() {
 
   const handleTemplateSelect = (templateId: string) => {
     setFormData(prev => ({ ...prev, selectedTemplate: templateId }));
+  };
+
+  const handleCoverImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Create URL for preview
+      const imageUrl = URL.createObjectURL(file);
+      setFormData(prev => ({ 
+        ...prev, 
+        coverImage: file,
+        coverImageUrl: imageUrl
+      }));
+    }
+  };
+
+  const handleReplaceCover = () => {
+    // Clear current cover
+    if (formData.coverImageUrl) {
+      URL.revokeObjectURL(formData.coverImageUrl);
+    }
+    setFormData(prev => ({ 
+      ...prev, 
+      coverImage: null,
+      coverImageUrl: null
+    }));
   };
 
   // Template definitions
@@ -901,8 +930,308 @@ export default function CreateBook() {
           </div>
         )}
 
+        {/* Step 5: Cover Design */}
+        {currentStep === 5 && (
+          <div className="space-y-8" data-testid="step-cover">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Book Cover Design</h1>
+              <p className="text-xl text-muted-foreground">
+                Upload or design your book cover
+              </p>
+            </div>
+
+            {!formData.coverImageUrl ? (
+              <div className="space-y-6">
+                {/* Upload Section */}
+                <Card>
+                  <CardContent className="p-8">
+                    <div className="text-center">
+                      <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <Image className="w-12 h-12 text-primary" />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-4">Upload Cover Image</h3>
+                      <p className="text-muted-foreground mb-6">
+                        Upload your own cover design or use our AI-generated suggestions
+                      </p>
+                      
+                      <div className="flex flex-col items-center space-y-4">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleCoverImageUpload}
+                          className="hidden"
+                          id="cover-upload"
+                          data-testid="input-cover-upload"
+                        />
+                        <label
+                          htmlFor="cover-upload"
+                          className="cursor-pointer inline-flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-colors"
+                          data-testid="button-upload-cover"
+                        >
+                          <Upload className="w-5 h-5" />
+                          <span>Choose Cover Image</span>
+                        </label>
+                        <p className="text-sm text-muted-foreground">
+                          Supported formats: JPG, PNG, GIF (max 10MB)
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Alternative Options */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6 text-center">
+                      <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">AI Generated Cover</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Let our AI create a professional cover based on your book details
+                      </p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6 text-center">
+                      <Palette className="w-12 h-12 text-primary mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">Design Templates</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Choose from our collection of professional templates
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Cover Preview */}
+                <Card>
+                  <CardContent className="p-8">
+                    <div className="flex items-start justify-between mb-6">
+                      <h3 className="text-lg font-semibold">Generated Cover Image</h3>
+                      <Button
+                        variant="outline"
+                        onClick={handleReplaceCover}
+                        className="flex items-center space-x-2"
+                        data-testid="button-replace-cover"
+                      >
+                        <Replace className="w-4 h-4" />
+                        <span>Replace Cover</span>
+                      </Button>
+                    </div>
+                    
+                    <div className="flex justify-center">
+                      <div className="relative">
+                        <img
+                          src={formData.coverImageUrl}
+                          alt="Book Cover Preview"
+                          className="max-w-sm max-h-96 object-contain rounded-lg shadow-lg"
+                          data-testid="cover-preview-image"
+                        />
+                        <div className="absolute inset-0 rounded-lg border-2 border-primary/20"></div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Cover Details */}
+                <Card className="bg-green-50 border-green-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-3">
+                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <div>
+                        <h3 className="font-semibold text-green-800">Cover Image Ready</h3>
+                        <p className="text-sm text-green-700">
+                          Your cover image has been uploaded and is ready for export
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="cover-navigation">
+              <Button 
+                variant="outline" 
+                onClick={handleBack}
+                data-testid="button-back-cover"
+              >
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back to Template
+              </Button>
+              
+              <Button
+                onClick={handleNext}
+                disabled={!formData.coverImageUrl}
+                data-testid="button-continue-cover"
+              >
+                Continue to Export
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Step 6: Export */}
+        {currentStep === 6 && (
+          <div className="space-y-8" data-testid="step-export">
+            <div className="text-center">
+              <h1 className="text-3xl font-bold mb-4">Export Your Book</h1>
+              <p className="text-xl text-muted-foreground">
+                Download your completed e-book in various formats
+              </p>
+            </div>
+
+            {/* Book Preview */}
+            <Card>
+              <CardContent className="p-8">
+                <h3 className="text-lg font-semibold mb-6">Book Preview</h3>
+                <div className="grid md:grid-cols-2 gap-8">
+                  {/* Cover Preview */}
+                  <div>
+                    <h4 className="font-medium mb-4">Cover</h4>
+                    {formData.coverImageUrl ? (
+                      <div className="flex justify-center">
+                        <img
+                          src={formData.coverImageUrl}
+                          alt="Book Cover"
+                          className="max-w-48 max-h-64 object-contain rounded-lg shadow-md"
+                          data-testid="export-cover-preview"
+                        />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center h-64 bg-muted/20 rounded-lg">
+                        <p className="text-muted-foreground">No cover image</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content Preview */}
+                  <div>
+                    <h4 className="font-medium mb-4">Content Summary</h4>
+                    <div className="space-y-4">
+                      <div>
+                        <p className="font-medium">{formData.title}</p>
+                        {formData.subtitle && (
+                          <p className="text-sm text-muted-foreground">{formData.subtitle}</p>
+                        )}
+                        <p className="text-sm text-muted-foreground">by {formData.author}</p>
+                      </div>
+                      
+                      <div>
+                        <p className="text-sm font-medium mb-2">Template: {templates.find(t => t.id === formData.selectedTemplate)?.name}</p>
+                        <p className="text-sm font-medium mb-2">Chapters: {formData.chapters.length}</p>
+                        <p className="text-sm font-medium">Language: {formData.language}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Export Options */}
+            <div className="grid md:grid-cols-3 gap-6">
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid="export-pdf">
+                <CardContent className="p-6 text-center">
+                  <FileText className="w-12 h-12 text-red-600 mx-auto mb-4" />
+                  <h3 className="font-semibold mb-2">PDF Format</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Professional PDF ready for printing and digital distribution
+                  </p>
+                  <Button className="w-full bg-red-600 hover:bg-red-700 text-white">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid="export-epub">
+                <CardContent className="p-6 text-center">
+                  <Book className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                  <h3 className="font-semibold mb-2">EPUB Format</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    E-book format compatible with most e-readers
+                  </p>
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download EPUB
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card className="cursor-pointer hover:shadow-lg transition-shadow" data-testid="export-docx">
+                <CardContent className="p-6 text-center">
+                  <Edit className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+                  <h3 className="font-semibold mb-2">Word Document</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Editable format for further customization
+                  </p>
+                  <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download DOCX
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Additional Options */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4">Export Options</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Include Cover Page</p>
+                      <p className="text-sm text-muted-foreground">Add the cover image as the first page</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Table of Contents</p>
+                      <p className="text-sm text-muted-foreground">Generate automatic chapter navigation</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Page Numbers</p>
+                      <p className="text-sm text-muted-foreground">Add page numbers to the document</p>
+                    </div>
+                    <input type="checkbox" defaultChecked className="rounded" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Navigation */}
+            <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="export-navigation">
+              <Button 
+                variant="outline" 
+                onClick={handleBack}
+                data-testid="button-back-export"
+              >
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back to Cover
+              </Button>
+              
+              <Button
+                onClick={handleNext}
+                data-testid="button-continue-export"
+              >
+                Continue to Publish
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
+
         {/* Coming Soon Steps */}
-        {currentStep > 4 && (
+        {currentStep > 6 && (
           <div className="text-center py-16" data-testid="coming-soon">
             <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
               <FileText className="w-12 h-12 text-primary" />

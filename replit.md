@@ -4,6 +4,25 @@
 
 This is a full-stack web application for AI-powered e-book creation called Bookster.cc. The platform allows users to create professional e-books with AI-generated content and covers, featuring interactive book idea generation tools, subscription management, and publishing capabilities to platforms like Amazon KDP.
 
+## Recent Changes (January 2025)
+
+### Template System Implementation
+- **Step 4: Template Selection** - Added comprehensive template system with 6 design options
+- **Live Template Previews** - Users can preview how text will look with different typography styles
+- **Applied Template Styling** - Chapter content displays with selected template formatting
+- **Premium Template System** - Original Design (free) with 5 premium options (Modern, Creative, Classic, Business, Academic)
+
+### Cover Design & Export Features  
+- **Step 5: Cover Design** - Implemented cover image upload functionality with preview
+- **Step 6: Export System** - Added comprehensive export options (PDF, EPUB, DOCX)
+- **Cover Integration** - Uploaded cover images carry through to export preview
+- **Export Options** - Include cover page, table of contents, and page numbering settings
+
+### AI Integration
+- **Anthropic Claude API** - Integrated for chapter generation using claude-sonnet-4-20250514
+- **Chapter Management** - Expand/collapse, regenerate individual chapters, and delete functionality
+- **Loading States** - Proper UI feedback during AI generation processes
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
