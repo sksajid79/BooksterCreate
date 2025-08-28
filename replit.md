@@ -8,6 +8,14 @@ This is a full-stack web application for AI-powered e-book creation called MyBoo
 
 The application includes comprehensive documentation for self-hosting deployment in `README.md`. The platform supports multiple deployment options including traditional VPS, Docker containers, and cloud platforms. Complete setup instructions include database configuration, API key setup, and production deployment guidelines.
 
+### Docker Configuration (Latest Addition)
+- **Complete Docker setup** with Dockerfile, docker-compose.yml, and production configurations
+- **Multi-container architecture** with app, PostgreSQL database, and Nginx reverse proxy
+- **Development and production** compose files for different deployment scenarios
+- **SSL/HTTPS ready** with Nginx configuration for production environments
+- **Database initialization** and migration support
+- **Comprehensive deployment guide** in DOCKER_DEPLOYMENT.md
+
 ## Recent Changes (January 2025)
 
 ### Database Integration & Workflow Persistence (Latest)

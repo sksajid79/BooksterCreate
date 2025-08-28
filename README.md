@@ -169,56 +169,52 @@ server {
 
 ### Option 2: Docker Deployment
 
-Create a `Dockerfile`:
+The repository includes complete Docker configuration files for easy deployment:
 
-```dockerfile
-FROM node:18-alpine
+#### Quick Start with Docker
 
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci --only=production
-
-COPY . .
-RUN npm run build
-
-EXPOSE 5000
-
-CMD ["npm", "start"]
-```
-
-Create a `docker-compose.yml`:
-
-```yaml
-version: '3.8'
-services:
-  app:
-    build: .
-    ports:
-      - "5000:5000"
-    environment:
-      - DATABASE_URL=postgresql://postgres:password@db:5432/mybookstore
-      - ANTHROPIC_API_KEY=your_api_key
-    depends_on:
-      - db
-      
-  db:
-    image: postgres:13
-    environment:
-      - POSTGRES_DB=mybookstore
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=password
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_data:
-```
-
-Run with:
 ```bash
+# Clone repository
+git clone <your-repository-url>
+cd mybookstore
+
+# Copy environment template
+cp .env.docker .env
+
+# Edit .env file with your API keys
+nano .env
+
+# Start with Docker Compose
 docker-compose up -d
 ```
+
+#### Available Docker Files
+
+- **`Dockerfile`** - Application container configuration
+- **`docker-compose.yml`** - Development/local deployment
+- **`docker-compose.prod.yml`** - Production deployment with Nginx reverse proxy
+- **`nginx.conf`** - Nginx configuration for production
+- **`.dockerignore`** - Optimized Docker build context
+- **`init-db.sql`** - Database initialization script
+
+#### Production Deployment
+
+For production environments:
+
+```bash
+# Use production compose configuration
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+#### Key Features
+
+- **Multi-container setup** with app, database, and Nginx
+- **Volume persistence** for database data
+- **Health checks** and restart policies
+- **SSL/HTTPS ready** configuration
+- **Resource limits** and scaling options
+
+For detailed Docker deployment instructions, see [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
 ### Option 3: Cloud Platform Deployment
 
