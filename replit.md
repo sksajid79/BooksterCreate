@@ -18,7 +18,14 @@ The application includes comprehensive documentation for self-hosting deployment
 
 ## Recent Changes (January 2025)
 
-### Database Integration & Workflow Persistence (Latest)
+### Enhanced Export & Interactive Features (Latest)
+- **Removed Export Pop-ups** - Streamlined export process with direct download without confirmation dialogs
+- **Cover Image Integration** - Cover images now appear as first page in PDF, HTML, and EPUB exports with proper formatting
+- **Interactive Flipbook Preview** - Added comprehensive flipbook preview feature with page-turning effects, navigation controls, and realistic book viewing experience
+- **Enhanced Export Formats** - Updated all export formats (PDF, HTML, EPUB) to include cover images at the beginning with proper styling and layout
+- **Improved User Experience** - Removed unnecessary alerts and confirmations for smoother workflow
+
+### Database Integration & Workflow Persistence 
 - **PostgreSQL Database** - Created comprehensive database schema with tables for users, books, chapters, bookProgress, and subscriptions
 - **Auto-Save Functionality** - Implemented automatic progress saving at each step of the book creation workflow
 - **Resume Capability** - Users can now save their progress and continue book creation later from any step

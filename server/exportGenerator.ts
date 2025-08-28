@@ -198,14 +198,15 @@ function generateHTMLContent(bookData: BookData, options: ExportOptions = { incl
 <body>
 `;
 
-  // Cover page
+  // Cover page with image as first page
   if (options.includeCover) {
     html += `
     <div class="cover-page">
-        ${bookData.coverImageUrl ? `<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Book Cover" class="cover-image" style="display:none;">` : ''}
+        ${bookData.coverImageUrl ? `<img src="${bookData.coverImageUrl}" alt="Book Cover" class="cover-image">` : ''}
         <h1 class="cover-title">${bookData.title}</h1>
         ${bookData.subtitle ? `<h2 class="cover-subtitle">${bookData.subtitle}</h2>` : ''}
         <p class="cover-author">by ${bookData.author}</p>
+        <div class="description" style="font-style: italic; margin: 2em 0; padding: 1em; background-color: rgba(0,0,0,0.05); border-radius: 4px;">${bookData.description}</div>
     </div>`;
   }
 
@@ -677,7 +678,7 @@ export async function exportToEPUB(bookData: BookData, options?: ExportOptions):
   // OEBPS
   const oebps = zip.folder('OEBPS');
   
-  // Content.opf
+  // Content.opf with cover image support
   let contentOpf = `<?xml version="1.0" encoding="UTF-8"?>
 <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="BookId" version="2.0">
   <metadata xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:opf="http://www.idpf.org/2007/opf">
@@ -686,12 +687,14 @@ export async function exportToEPUB(bookData: BookData, options?: ExportOptions):
     <dc:language>${bookData.language || 'en'}</dc:language>
     <dc:identifier id="BookId">${Date.now()}</dc:identifier>
     <dc:description>${bookData.description}</dc:description>
+    ${bookData.coverImageUrl ? '<meta name="cover" content="cover-image"/>' : ''}
   </metadata>
   <manifest>
     <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
     <item id="style" href="style.css" media-type="text/css"/>
     <item id="cover" href="cover.xhtml" media-type="application/xhtml+xml"/>
-    <item id="toc" href="toc.xhtml" media-type="application/xhtml+xml"/>`;
+    <item id="toc" href="toc.xhtml" media-type="application/xhtml+xml"/>
+    ${bookData.coverImageUrl ? '<item id="cover-image" href="cover.jpg" media-type="image/jpeg"/>' : ''}`;
 
   bookData.chapters.forEach((chapter, index) => {
     contentOpf += `
@@ -763,7 +766,7 @@ p {
 
   oebps?.file('style.css', css);
 
-  // Cover page
+  // Cover page with image
   const coverXhtml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -773,9 +776,11 @@ p {
 </head>
 <body>
   <div class="cover">
+    ${bookData.coverImageUrl ? `<img src="cover.jpg" alt="Book Cover" style="max-width: 300px; height: auto; margin-bottom: 2em; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);"/>` : ''}
     <h1 class="cover-title">${bookData.title}</h1>
     ${bookData.subtitle ? `<h2>${bookData.subtitle}</h2>` : ''}
     <p class="cover-author">by ${bookData.author}</p>
+    <div style="font-style: italic; margin: 2em 0; padding: 1em; background-color: rgba(0,0,0,0.05); border-radius: 4px; max-width: 500px; margin-left: auto; margin-right: auto;">${bookData.description}</div>
   </div>
 </body>
 </html>`;

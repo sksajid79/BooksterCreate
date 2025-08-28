@@ -417,10 +417,7 @@ export default function CreateBook() {
       return response.json();
     },
     onSuccess: (data) => {
-      // Show success message and trigger download
-      alert(`${data.format} export completed! File: ${data.fileName}`);
-      
-      // Trigger download
+      // Trigger download directly without popup
       const link = document.createElement('a');
       link.href = data.downloadUrl;
       link.download = data.fileName;
@@ -1452,6 +1449,39 @@ export default function CreateBook() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+
+            {/* Interactive Flipbook Preview */}
+            <div>
+              <h3 className="text-xl font-semibold mb-6">Interactive Flipbook Preview</h3>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="text-center mb-4">
+                    <BookOpen className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                    <h4 className="font-semibold mb-2">Interactive Flipbook Preview</h4>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Preview your book in an interactive flipbook format. See how readers will experience your content with realistic page-turning effects.
+                    </p>
+                    <Button 
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                      onClick={() => window.open(`/flipbook-preview?bookData=${encodeURIComponent(JSON.stringify({
+                        title: formData.title,
+                        subtitle: formData.subtitle,
+                        author: formData.author,
+                        description: formData.description,
+                        chapters: formData.chapters,
+                        selectedTemplate: formData.selectedTemplate,
+                        coverImageUrl: formData.coverImageUrl,
+                        language: formData.language
+                      }))}`, '_blank')}
+                      data-testid="button-open-flipbook-preview"
+                    >
+                      <BookOpen className="w-4 h-4 mr-2" />
+                      Open Flipbook Preview
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Export Status */}

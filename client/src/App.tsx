@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/home.tsx";
 import CreateBook from "@/pages/create-book.tsx";
+import FlipbookPreview from "@/pages/flipbook-preview.tsx";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -12,6 +13,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/create-book" component={CreateBook} />
+      <Route path="/flipbook-preview" component={FlipbookPreview} />
       <Route component={NotFound} />
     </Switch>
   );
