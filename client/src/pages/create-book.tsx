@@ -285,7 +285,7 @@ export default function CreateBook() {
       try {
         const bookData = {
           userId: "temp-user-id", // In a real app, this would come from auth
-          creationMethod: method,
+          creationMethod: method === "ai" ? "ai-generated" : "manual",
           currentStep: 1,
           status: "draft"
         };

@@ -4,6 +4,7 @@ import puppeteer from 'puppeteer';
 import archiver from 'archiver';
 import { marked } from 'marked';
 import JSZip from 'jszip';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 
 interface BookData {
   title: string;
@@ -587,61 +588,151 @@ p {
   return fileName;
 }
 
-// Export as DOCX (simplified - creates a rich text document)
+// Export as DOCX
 export async function exportToDOCX(bookData: BookData, options?: ExportOptions): Promise<string> {
   await ensureExportDir();
   
   const fileName = `${bookData.title.replace(/[^a-zA-Z0-9]/g, '_')}.docx`;
   const filePath = path.join(EXPORT_DIR, fileName);
   
-  // For a complete DOCX implementation, you would need a library like docx
-  // For now, we'll create an RTF file that Word can open
-  const rtfFileName = `${bookData.title.replace(/[^a-zA-Z0-9]/g, '_')}.rtf`;
-  const rtfFilePath = path.join(EXPORT_DIR, rtfFileName);
+  const paragraphs: Paragraph[] = [];
   
-  let rtf = `{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}`;
-  
-  // Title page
+  // Cover page
   if (options?.includeCover) {
-    rtf += `\\f0\\fs36\\b ${bookData.title}\\b0\\par`;
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: bookData.title,
+            bold: true,
+            size: 36,
+          }),
+        ],
+        heading: HeadingLevel.TITLE,
+        alignment: AlignmentType.CENTER,
+      })
+    );
+    
     if (bookData.subtitle) {
-      rtf += `\\fs28 ${bookData.subtitle}\\par`;
+      paragraphs.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: bookData.subtitle,
+              size: 28,
+            }),
+          ],
+          alignment: AlignmentType.CENTER,
+        })
+      );
     }
-    rtf += `\\fs24 by ${bookData.author}\\par\\page`;
+    
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `by ${bookData.author}`,
+            size: 24,
+          }),
+        ],
+        alignment: AlignmentType.CENTER,
+      })
+    );
+    
+    paragraphs.push(new Paragraph({ text: "", pageBreakBefore: true }));
   }
   
   // Table of contents
   if (options?.includeTableOfContents) {
-    rtf += `\\fs32\\b Table of Contents\\b0\\par`;
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: "Table of Contents",
+            bold: true,
+            size: 32,
+          }),
+        ],
+        heading: HeadingLevel.HEADING_1,
+      })
+    );
+    
     bookData.chapters.forEach((chapter, index) => {
-      rtf += `\\fs20 Chapter ${index + 1}: ${chapter.title}\\par`;
+      paragraphs.push(
+        new Paragraph({
+          children: [
+            new TextRun({
+              text: `Chapter ${index + 1}: ${chapter.title}`,
+              size: 20,
+            }),
+          ],
+        })
+      );
     });
-    rtf += `\\page`;
+    
+    paragraphs.push(new Paragraph({ text: "", pageBreakBefore: true }));
   }
   
   // Chapters
   bookData.chapters.forEach((chapter, index) => {
-    rtf += `\\fs28\\b Chapter ${index + 1}: ${chapter.title}\\b0\\par`;
+    paragraphs.push(
+      new Paragraph({
+        children: [
+          new TextRun({
+            text: `Chapter ${index + 1}: ${chapter.title}`,
+            bold: true,
+            size: 28,
+          }),
+        ],
+        heading: HeadingLevel.HEADING_1,
+        pageBreakBefore: index > 0,
+      })
+    );
     
-    const paragraphs = chapter.content.split('\n\n');
-    paragraphs.forEach(paragraph => {
+    const chapterParagraphs = chapter.content.split('\n\n');
+    chapterParagraphs.forEach(paragraph => {
       const trimmed = paragraph.trim();
       if (trimmed) {
         if (trimmed.startsWith('The ') && trimmed.includes('Changes')) {
-          rtf += `\\fs24\\b ${trimmed}\\b0\\par`;
+          paragraphs.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: trimmed,
+                  bold: true,
+                  size: 24,
+                }),
+              ],
+              heading: HeadingLevel.HEADING_2,
+            })
+          );
         } else {
-          rtf += `\\fs20 ${trimmed}\\par`;
+          paragraphs.push(
+            new Paragraph({
+              children: [
+                new TextRun({
+                  text: trimmed,
+                  size: 20,
+                }),
+              ],
+            })
+          );
         }
       }
     });
-    
-    rtf += `\\page`;
   });
   
-  rtf += `}`;
+  const doc = new Document({
+    sections: [
+      {
+        properties: {},
+        children: paragraphs,
+      },
+    ],
+  });
   
-  await fs.writeFile(rtfFilePath, rtf, 'utf-8');
+  const buffer = await Packer.toBuffer(doc);
+  await fs.writeFile(filePath, buffer);
   
-  // Return the RTF file name for now
-  return rtfFileName;
+  return fileName;
 }
