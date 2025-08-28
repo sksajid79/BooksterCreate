@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +20,7 @@ const STEPS = [
   { id: 3, name: "Chapters", key: "chapters" },
   { id: 4, name: "Template", key: "template" },
   { id: 5, name: "Cover", key: "cover" },
-  { id: 6, name: "Export", key: "export" },
+  { id: 6, name: "Result", key: "result" },
   { id: 7, name: "Publish", key: "publish" },
   { id: 8, name: "Marketing", key: "marketing" }
 ];
@@ -244,31 +245,23 @@ export default function CreateBook() {
           <div className="mb-4">
             <Progress value={progressPercentage} className="h-2" data-testid="progress-bar" />
           </div>
-          <div className="grid grid-cols-4 md:grid-cols-8 gap-2">
+          <div className="flex justify-between items-center">
             {STEPS.map((step, index) => (
-              <div
-                key={step.id}
-                className={`flex flex-col items-center text-center ${
-                  step.id === currentStep
-                    ? "text-primary"
-                    : step.id < currentStep
-                    ? "text-green-600"
-                    : "text-muted-foreground"
-                }`}
-                data-testid={`step-${step.id}`}
-              >
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium mb-2 ${
-                    step.id === currentStep
-                      ? "bg-primary text-primary-foreground"
-                      : step.id < currentStep
-                      ? "bg-green-600 text-white"
-                      : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {step.id < currentStep ? "✓" : step.id}
+              <div key={step.id} className="flex flex-col items-center" data-testid={`step-indicator-${step.key}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                  step.id === currentStep 
+                    ? 'bg-primary text-primary-foreground' 
+                    : step.id < currentStep 
+                      ? 'bg-primary/20 text-primary' 
+                      : 'bg-muted text-muted-foreground'
+                }`}>
+                  {step.id}
                 </div>
-                <span className="text-xs font-medium">{step.name}</span>
+                <span className={`text-xs mt-1 ${
+                  step.id === currentStep ? 'text-primary font-medium' : 'text-muted-foreground'
+                }`}>
+                  {step.name}
+                </span>
               </div>
             ))}
           </div>
@@ -276,81 +269,143 @@ export default function CreateBook() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Step 1: Method Selection */}
         {currentStep === 1 && (
           <div className="space-y-8" data-testid="step-method">
             <div className="text-center">
-              <h1 className="text-3xl font-bold mb-4">Choose Your Creation Method</h1>
-              <p className="text-xl text-muted-foreground">
-                Select how you'd like to create your e-book
+              <h1 className="text-3xl font-bold mb-4" data-testid="heading-create-book">Create Your Book</h1>
+              <p className="text-xl text-muted-foreground mb-8" data-testid="text-description">
+                Follow these steps to create and publish your professional book with our guided workflow.
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-              <Card
-                className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
-                  formData.method === "ai" ? "border-primary bg-primary/5" : "border-border"
-                }`}
-                onClick={() => handleMethodSelect("ai")}
-                data-testid="method-ai"
-              >
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <Sparkles className="w-8 h-8 text-primary" />
+            <div className="text-center mb-8">
+              <h2 className="text-xl font-semibold mb-2" data-testid="heading-pseudonym">🎭 Pseudonym Selection</h2>
+              <p className="text-muted-foreground mb-4">Choose the pen name for your book</p>
+              
+              <div className="max-w-md mx-auto">
+                <div className="flex items-center space-x-2 p-3 border border-border rounded-lg bg-card">
+                  <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                    <span className="text-primary font-medium">S</span>
                   </div>
-                  <h3 className="text-xl font-semibold mb-4">AI Generated Book</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Let our AI create a complete book for you based on your topic and preferences. Perfect for getting started quickly.
-                  </p>
-                  <div className="space-y-2 text-sm text-left">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-1 h-1 bg-primary rounded-full"></div>
-                      <span>Automated content generation</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-1 h-1 bg-primary rounded-full"></div>
-                      <span>Professional structure and flow</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-1 h-1 bg-primary rounded-full"></div>
-                      <span>Ready in minutes</span>
-                    </div>
+                  <div className="text-left">
+                    <div className="font-medium" data-testid="author-name">Silk Starset</div>
+                    <div className="text-sm text-muted-foreground">Professional</div>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+            </div>
 
-              <Card
-                className={`cursor-pointer transition-all hover:shadow-lg border-2 ${
-                  formData.method === "manual" ? "border-primary bg-primary/5" : "border-border"
-                }`}
-                onClick={() => handleMethodSelect("manual")}
-                data-testid="method-manual"
-              >
-                <CardContent className="p-8 text-center">
-                  <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <PenTool className="w-8 h-8 text-orange-600" />
-                  </div>
-                  <h3 className="text-xl font-semibold mb-4">Manual Creation</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Write your book manually with our guided tools and templates. Full creative control over every word.
-                  </p>
-                  <div className="space-y-2 text-sm text-left">
-                    <div className="flex items-center space-x-2">
-                      <div className="w-1 h-1 bg-orange-600 rounded-full"></div>
-                      <span>Complete creative control</span>
+            <div>
+              <h3 className="text-xl font-semibold text-center mb-8" data-testid="heading-choose-method">
+                Choose Your Book Creation Method
+              </h3>
+              <p className="text-center text-muted-foreground mb-8" data-testid="text-method-description">
+                Select from the 3 fast to create your book and choose an author pen name.
+              </p>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {/* AI Generated Book */}
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary/50"
+                  onClick={() => handleMethodSelect("ai")}
+                  data-testid="card-ai-method"
+                >
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Sparkles className="w-6 h-6 text-primary" />
+                        <h4 className="text-lg font-semibold">AI Generated Book</h4>
+                      </div>
+                      <Badge className="bg-orange-100 text-orange-700 border-orange-300" data-testid="badge-popular">
+                        Popular
+                      </Badge>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-1 h-1 bg-orange-600 rounded-full"></div>
-                      <span>Chapter-by-chapter writing</span>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Let AI create your entire book from a simple description.
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>Full content generated using advanced AI</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>The language of your prompt and content content determines the language of the generated eBook. 49% language supported.</span>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="w-1 h-1 bg-orange-600 rounded-full"></div>
-                      <span>Professional templates</span>
+                    
+                    <div className="mt-6 p-4 bg-muted rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Credits Balance</span>
+                        <span className="text-primary font-bold">2</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">Available credits for creating books</p>
+                      
+                      <div className="mb-4">
+                        <div className="flex items-center justify-between text-sm">
+                          <span>Low on Credits?</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          You have less than 3 credits left. To get more credits, check out our pricing page.
+                        </p>
+                      </div>
+                      
+                      <Button className="w-full" size="sm" data-testid="button-get-more-credits">
+                        Get More Credits
+                      </Button>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+
+                {/* Manual Creation */}
+                <Card 
+                  className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary/50"
+                  onClick={() => handleMethodSelect("manual")}
+                  data-testid="card-manual-method"
+                >
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <PenTool className="w-6 h-6 text-primary" />
+                      <h4 className="text-lg font-semibold">Manual Creation</h4>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-muted-foreground mb-4">
+                      Write and design your book manually with full control.
+                    </p>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>Full creative control</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>Intuitive chapter structure</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>AI-powered cover</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>Manual cover upload</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="w-1 h-1 bg-primary rounded-full"></div>
+                        <span>Full Publishing Features</span>
+                      </div>
+                    </div>
+                    
+                    <Button className="w-full mt-6" variant="outline" data-testid="button-start-creating-book">
+                      Start Creating Book
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </div>
         )}
@@ -474,6 +529,89 @@ export default function CreateBook() {
                     </Select>
                   </div>
 
+                  {/* HTML Book Description */}
+                  <div>
+                    <Label className="text-base font-medium">HTML Book Description (Optional)</Label>
+                    <div className="mt-2">
+                      {/* Rich Text Editor Toolbar */}
+                      <div className="border border-border rounded-t-lg bg-muted/30 p-2 flex items-center space-x-2" data-testid="rich-text-toolbar">
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Underline className="h-4 w-4" />
+                        </Button>
+                        <div className="w-px h-6 bg-border"></div>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <List className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <AlignLeft className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      {/* Rich Text Content Area */}
+                      <div className="border border-t-0 border-border rounded-b-lg p-4 min-h-48 bg-background" data-testid="rich-text-content">
+                        <div className="space-y-4">
+                          <h3 className="text-lg font-semibold">Teen Parenting Simplified: A Practical Guide to Raising Happy, Healthy Teens with Confidence and Compassion</h3>
+                          
+                          <p className="text-muted-foreground">
+                            Are you struggling to connect with your teenager? Do you feel overwhelmed by the challenges of parenting during these formative years? <em>Teen Parenting Simplified</em> is your go-to resource for navigating the ups and downs of adolescence with ease and confidence.
+                          </p>
+                          
+                          <p>In this comprehensive guide, Sak Rahmi offers practical advice, real-life examples, and expert strategies to help you:</p>
+                          
+                          <ul className="list-disc ml-6 space-y-1">
+                            <li>Improve communication and build trust with your teen</li>
+                            <li>Handle conflicts and emotional outbursts effectively</li>
+                            <li>Support your teen's mental and emotional well-being</li>
+                            <li>Set boundaries while fostering independence</li>
+                            <li>Prepare your teen for adulthood with life skills and resilience</li>
+                          </ul>
+                          
+                          <p>
+                            Whether you're a new parent to a teenager or looking to strengthen your existing relationship, this book provides the tools you need to create a loving, supportive home environment. <strong>Start your journey to confident teen parenting today!</strong>
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Keywords */}
+                  <div>
+                    <Label className="text-base font-medium">Keywords (Optional)</Label>
+                    <div className="mt-2 grid grid-cols-2 gap-3" data-testid="keywords-grid">
+                      {[
+                        "teen parenting guide",
+                        "raising teenagers book",
+                        "parenting teens with confidence",
+                        "teen communication strategies",
+                        "adolescent emotional support",
+                        "positive parenting techniques",
+                        "teen mental health guide"
+                      ].map((keyword, index) => (
+                        <div key={index} className="flex items-center space-x-2 p-2 bg-muted rounded-lg">
+                          <span className="text-sm flex-1">{keyword}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                            onClick={() => handleKeywordRemove(index)}
+                            data-testid={`button-remove-keyword-${index}`}
+                          >
+                            ×
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Next Step Button */}
                   <div className="pt-6">
                     <Button 
@@ -518,20 +656,91 @@ export default function CreateBook() {
                   </AlertDescription>
                 </Alert>
 
-                {/* Chapters List */}
-                <div className="space-y-4" data-testid="chapters-list">
-                  {formData.chapters.map((chapter, index) => (
-                    <Card key={chapter.id} className="border border-border" data-testid={`chapter-${chapter.id}`}>
-                      <div className="flex items-center justify-between p-4 border-b border-border">
-                        <div className="flex items-center space-x-3">
-                          <div className="cursor-move" data-testid={`chapter-drag-${chapter.id}`}>
-                            <GripVertical className="h-4 w-4 text-muted-foreground" />
-                          </div>
-                          <div className="flex-1">
-                            <h3 className="font-medium text-foreground" data-testid={`chapter-title-${chapter.id}`}>
-                              {chapter.title}
-                            </h3>
-                          </div>
+            {/* Chapters List */}
+            <div className="space-y-4" data-testid="chapters-list">
+              {formData.chapters.map((chapter, index) => (
+                <Card key={chapter.id} className="border border-border" data-testid={`chapter-${chapter.id}`}>
+                  <div className="flex items-center justify-between p-4 border-b border-border">
+                    <div className="flex items-center space-x-3">
+                      <div className="cursor-move" data-testid={`chapter-drag-${chapter.id}`}>
+                        <GripVertical className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground" data-testid={`chapter-title-${chapter.id}`}>
+                          {chapter.title}
+                        </h3>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleChapter(chapter.id)}
+                        className="text-primary hover:text-primary/80"
+                        data-testid={`button-toggle-${chapter.id}`}
+                      >
+                        {chapter.isExpanded ? (
+                          <ChevronUp className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => regenerateChapter(chapter.id)}
+                        className="text-primary hover:text-primary/80"
+                        disabled={regenerateChapterMutation.isPending}
+                        data-testid={`button-regenerate-${chapter.id}`}
+                      >
+                        <RefreshCw className={`h-4 w-4 ${regenerateChapterMutation.isPending ? 'animate-spin' : ''}`} />
+                      </Button>
+                      
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => deleteChapter(chapter.id)}
+                        className="text-destructive hover:text-destructive/80"
+                        data-testid={`button-delete-${chapter.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  {chapter.isExpanded && (
+                    <CardContent className="p-6">
+                      <div className="prose prose-sm max-w-none" data-testid={`chapter-content-${chapter.id}`}>
+                        {chapter.content.split('\n\n').map((paragraph, paragraphIndex) => {
+                          if (paragraph.trim().startsWith('The ') && paragraph.trim().includes('Changes')) {
+                            return (
+                              <h4 key={paragraphIndex} className="text-lg font-semibold mt-6 mb-3 text-foreground">
+                                {paragraph.trim()}
+                              </h4>
+                            );
+                          }
+                          return (
+                            <p key={paragraphIndex} className="text-muted-foreground leading-relaxed mb-4">
+                              {paragraph.trim()}
+                            </p>
+                          );
+                        })}
+                      </div>
+                      
+                      <div className="flex items-center justify-between pt-4 mt-6 border-t border-border">
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleChapter(chapter.id)}
+                            className="text-muted-foreground hover:text-foreground"
+                            data-testid={`button-collapse-${chapter.id}`}
+                          >
+                            <ChevronUp className="h-4 w-4 mr-1" />
+                            Collapse
+                          </Button>
                         </div>
                         
                         <div className="flex items-center space-x-2">
@@ -539,99 +748,40 @@ export default function CreateBook() {
                             variant="ghost"
                             size="sm"
                             onClick={() => toggleChapter(chapter.id)}
-                            className="text-primary hover:text-primary/80"
-                            data-testid={`button-toggle-${chapter.id}`}
+                            className="text-muted-foreground hover:text-foreground"
+                            data-testid={`button-expand-${chapter.id}`}
                           >
-                            {chapter.isExpanded ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => regenerateChapter(chapter.id)}
-                            className="text-primary hover:text-primary/80"
-                            disabled={regenerateChapterMutation.isPending}
-                            data-testid={`button-regenerate-${chapter.id}`}
-                          >
-                            <RefreshCw className={`h-4 w-4 ${regenerateChapterMutation.isPending ? 'animate-spin' : ''}`} />
-                          </Button>
-                          
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => deleteChapter(chapter.id)}
-                            className="text-destructive hover:text-destructive/80"
-                            data-testid={`button-delete-${chapter.id}`}
-                          >
-                            <Trash2 className="h-4 w-4" />
+                            <ChevronDown className="h-4 w-4 mr-1" />
+                            Expand
                           </Button>
                         </div>
                       </div>
+                    </CardContent>
+                  )}
+                </Card>
+              ))}
+            </div>
 
-                      {chapter.isExpanded && (
-                        <CardContent className="p-6">
-                          <div className="prose prose-sm max-w-none" data-testid={`chapter-content-${chapter.id}`}>
-                            {chapter.content.split('\n\n').map((paragraph, paragraphIndex) => {
-                              if (paragraph.trim().startsWith('The ') && paragraph.trim().includes('Changes')) {
-                                return (
-                                  <h4 key={paragraphIndex} className="text-lg font-semibold mt-6 mb-3 text-foreground">
-                                    {paragraph.trim()}
-                                  </h4>
-                                );
-                              }
-                              return (
-                                <p key={paragraphIndex} className="text-muted-foreground leading-relaxed mb-4">
-                                  {paragraph.trim()}
-                                </p>
-                              );
-                            })}
-                          </div>
-                        </CardContent>
-                      )}
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Navigation */}
-                <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="chapters-navigation">
-                  <Button 
-                    variant="outline" 
-                    onClick={handleBack}
-                    data-testid="button-back-chapters"
-                  >
-                    <ArrowLeft className="mr-2 w-4 h-4" />
-                    Back
-                  </Button>
-                  
-                  <Button
-                    onClick={handleNext}
-                    disabled={formData.chapters.length === 0}
-                    data-testid="button-continue-chapters"
-                  >
-                    Continue to Template
-                    <ChevronRight className="ml-2 w-4 h-4" />
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-16" data-testid="no-chapters">
-                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <FileText className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h2 className="text-2xl font-semibold mb-4">No Chapters Generated</h2>
-                <p className="text-muted-foreground mb-6">
-                  Go back to the Details step to ensure all required information is filled out.
-                </p>
-                <Button variant="outline" onClick={handleBack}>
-                  <ArrowLeft className="mr-2 w-4 h-4" />
-                  Back to Details
-                </Button>
-              </div>
-            )}
+            {/* Navigation */}
+            <div className="flex justify-between items-center pt-8 border-t border-border" data-testid="chapters-navigation">
+              <Button 
+                variant="outline" 
+                onClick={handleBack}
+                data-testid="button-back-chapters"
+              >
+                <ArrowLeft className="mr-2 w-4 h-4" />
+                Back
+              </Button>
+              
+              <Button
+                onClick={handleNext}
+                disabled={formData.chapters.length === 0}
+                data-testid="button-continue-chapters"
+              >
+                Continue to Template
+                <ChevronRight className="ml-2 w-4 h-4" />
+              </Button>
+            </div>
           </div>
         )}
 
