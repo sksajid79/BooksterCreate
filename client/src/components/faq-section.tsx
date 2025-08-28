@@ -8,7 +8,7 @@ export default function FAQSection() {
   const faqs = [
     {
       question: "Which languages does Bookster support?",
-      answer: "Currently, we support English and German languages for Bookster. However, as our AI models are multilingual, you can create books in any language. The AI will generate content and the cover based on the language of your input material."
+      answer: "Currently, we support English and German languages for MyBookStore. However, as our AI models are multilingual, you can create books in any language. The AI will generate content and the cover based on the language of your input material."
     },
     {
       question: "How long does it take to create an ebook?",

@@ -38,7 +38,7 @@ export default function Footer() {
           <div data-testid="footer-brand">
             <div className="flex items-center space-x-2 mb-4">
               <Book className="text-primary text-2xl" />
-              <span className="text-xl font-bold">Bookster.cc</span>
+              <span className="text-xl font-bold">MyBookStore</span>
             </div>
             <p className="text-background/60 mb-4" data-testid="footer-description">
               Transform your knowledge into captivating e-books in minutes with AI-powered creation.

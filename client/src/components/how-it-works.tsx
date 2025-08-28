@@ -27,7 +27,7 @@ export default function HowItWorks() {
     <section id="features" className="py-20" data-testid="how-it-works-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4" data-testid="heading-how-it-works">How Bookster Works</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4" data-testid="heading-how-it-works">How MyBookStore Works</h2>
           <p className="text-xl text-muted-foreground" data-testid="text-three-steps">From idea to published e-book in just 3 simple steps</p>
         </div>
 

@@ -544,7 +544,7 @@ export default function CreateBook() {
             <div className="flex items-center space-x-4">
               <Link href="/" className="flex items-center space-x-2" data-testid="logo">
                 <Book className="text-primary text-2xl" />
-                <span className="text-xl font-bold">Bookster.cc</span>
+                <span className="text-xl font-bold">MyBookStore</span>
               </Link>
               <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
                 <Link href="/" className="hover:text-foreground transition-colors">Home</Link>

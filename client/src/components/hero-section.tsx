@@ -4,8 +4,8 @@ import { Link } from "wouter";
 import { Wand2, Play, ArrowRight } from "lucide-react";
 
 export default function HeroSection() {
-  const scrollToBooksterMatic = () => {
-    const element = document.getElementById('bookster-o-matic');
+  const scrollToMyBookStoreMatic = () => {
+    const element = document.getElementById('mybookstore-o-matic');
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
     }

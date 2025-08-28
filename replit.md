@@ -1,8 +1,8 @@
-# E-book Creation Platform (Bookster.cc)
+# E-book Creation Platform (MyBookStore)
 
 ## Overview
 
-This is a full-stack web application for AI-powered e-book creation called Bookster.cc. The platform allows users to create professional e-books with AI-generated content and covers, featuring interactive book idea generation tools, subscription management, and publishing capabilities to platforms like Amazon KDP.
+This is a full-stack web application for AI-powered e-book creation called MyBookStore. The platform allows users to create professional e-books with AI-generated content and covers, featuring interactive book idea generation tools, subscription management, and publishing capabilities to platforms like Amazon KDP.
 
 ## Recent Changes (January 2025)
 

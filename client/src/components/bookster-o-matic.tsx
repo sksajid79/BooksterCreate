@@ -63,10 +63,10 @@ export default function BooksterOMatic() {
   };
 
   return (
-    <section id="bookster-o-matic" className="py-20 bg-muted/30" data-testid="bookster-o-matic-section">
+    <section id="mybookstore-o-matic" className="py-20 bg-muted/30" data-testid="mybookstore-o-matic-section">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-16">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-4" data-testid="heading-bookster-o-matic">BOOKSTER-O-MATIC</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4" data-testid="heading-mybookstore-o-matic">MYBOOKSTORE-O-MATIC</h2>
           <p className="text-xl text-muted-foreground mb-8" data-testid="text-spin-wheels">Spin the wheels to generate your perfect book idea!</p>
           <Badge variant="secondary" className="bg-accent text-accent-foreground" data-testid="badge-tip">
             <Lightbulb className="w-4 h-4 mr-2" />
