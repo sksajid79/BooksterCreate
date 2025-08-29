@@ -185,6 +185,12 @@ export const insertBookProgressSchema = createInsertSchema(bookProgress).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  completedAt: z.union([z.date(), z.string(), z.null()]).optional().transform((val) => {
+    if (!val) return null;
+    if (typeof val === 'string') return new Date(val);
+    return val;
+  }),
 });
 
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({

@@ -22,30 +22,37 @@ Tone & Style: {toneStyle}
 Mission/Goal: {mission}
 
 Generate {numberOfChapters} complete chapters for this e-book. Each chapter should have:
-1. A compelling chapter title
+1. A compelling chapter title (WITHOUT the word "Chapter" or numbers)
 2. Detailed, engaging content (800-1200 words per chapter)
 3. Practical advice, real-world examples, and actionable strategies
 4. Professional tone that matches the specified style and target audience
 
-CRITICAL: You MUST respond with ONLY a valid JSON array in the following format. Do not include any explanation, commentary, or markdown formatting. Start your response directly with [ and end with ]:
+CRITICAL FORMATTING RULES:
+- Respond with ONLY a valid JSON array
+- Do NOT include any explanation, commentary, or markdown formatting
+- Do NOT include the words "title:" or "content:" in the actual text
+- Start your response directly with [ and end with ]
+- Chapter titles should be clean titles only (e.g., "Understanding Your Teen's Brain")
+- Chapter content should be well-formatted prose with proper headings using ## for sections
 
+Example format:
 [
   {
     "id": "1",
-    "title": "Chapter Title Here",
-    "content": "Complete chapter content here with multiple paragraphs, subheadings, and actionable advice..."
+    "title": "Understanding Your Teen's Brain",
+    "content": "## The Science Behind Teenage Behavior\n\nParenting a teenager can feel like navigating uncharted territory...\n\n## Key Development Stages\n\nDuring adolescence, several critical changes occur..."
   },
   {
     "id": "2", 
-    "title": "Second Chapter Title",
-    "content": "Second chapter content with detailed information..."
+    "title": "Building Strong Communication",
+    "content": "## Why Traditional Methods Don't Work\n\nMany parents find that communication strategies that worked with younger children...\n\n## Effective Listening Techniques\n\nThe foundation of good communication..."
   }
 ]
 
-Make sure the content is professional, engaging, and provides real value to the {targetAudience}. Each chapter should be substantial and complete. Return only the JSON array, nothing else.`
+Make sure each chapter provides substantial, professional content that delivers real value to {targetAudience}. Use markdown formatting (## for headings, **bold** for emphasis) within the content. Return only the JSON array, nothing else.`
     },
     chapter_generation: {
-      prompt: `As an expert e-book author, generate comprehensive chapters with proper structure, engaging content, and actionable insights. 
+      prompt: `As an expert e-book author, generate comprehensive content for the chapter titled "{chapterTitle}" with proper structure, engaging content, and actionable insights.
 
 Book Context:
 - Title: {title}
@@ -55,12 +62,11 @@ Book Context:
 - Mission: {mission}
 
 Chapter Details:
-- Chapter Number: {chapterNumber}
 - Chapter Title: {chapterTitle}
 
 Requirements:
 1. Write 1500-2500 words for this chapter
-2. Use clear headings and subheadings for structure
+2. Use markdown headings (## for main sections, ### for subsections)
 3. Include engaging introductions and conclusions for each section
 4. Provide practical examples, tips, or case studies
 5. Maintain professional quality while being accessible to the target audience
@@ -69,10 +75,12 @@ Requirements:
 
 Structure should include:
 - Chapter introduction (hook the reader)
-- 3-4 main sections with subheadings
+- 3-4 main sections with ## headings
 - Practical examples or actionable tips
 - Key takeaways or chapter summary
-- Smooth transition to the next chapter (when applicable)
+- Smooth transitions between sections
+
+IMPORTANT: Return ONLY the chapter content as clean, well-formatted text using markdown. Do NOT include any JSON formatting, property names, or extra explanations. Start directly with the chapter content.
 
 Write in a {toneStyle} tone that resonates with {targetAudience}. Focus on delivering value and maintaining engagement throughout.`
     }
