@@ -71,6 +71,18 @@ export default function AdminPanel() {
     enabled: isAuthenticated && user?.role === "admin",
   });
 
+  // Fetch book outline prompt
+  const { data: bookOutlinePrompt, isLoading: outlineLoading } = useQuery({
+    queryKey: ["/api/admin/prompts/book_outline"],
+    enabled: isAuthenticated && user?.role === "admin",
+  });
+
+  // Fetch chapter generation prompt
+  const { data: chapterPrompt, isLoading: chapterLoading } = useQuery({
+    queryKey: ["/api/admin/prompts/chapter_generation"],
+    enabled: isAuthenticated && user?.role === "admin",
+  });
+
   // Fetch users
   const { data: users, isLoading: usersLoading } = useQuery({
     queryKey: ["/api/admin/users"],
@@ -93,6 +105,27 @@ export default function AdminPanel() {
       toast({
         title: "Error",
         description: error.message || "Failed to save configuration",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Update prompt mutation
+  const updatePromptMutation = useMutation({
+    mutationFn: async ({ promptType, prompt, description }: { promptType: string; prompt: string; description: string }) => {
+      await apiRequest("PUT", `/api/admin/prompts/${promptType}`, { prompt, description });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: [`/api/admin/prompts/${variables.promptType}`] });
+      toast({
+        title: "Prompt Updated",
+        description: "AI prompt has been updated successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update prompt",
         variant: "destructive",
       });
     },
@@ -139,6 +172,23 @@ export default function AdminPanel() {
     return config?.configValue?.prompt || "";
   };
 
+  const getPromptValue = (promptData: any) => {
+    if (!promptData) return "";
+    return promptData.configValue?.prompt || "";
+  };
+
+  const handleUpdatePrompt = (promptType: string, promptValue: string) => {
+    const description = promptType === 'book_outline' 
+      ? 'AI prompt for generating comprehensive book outlines with structured chapters'
+      : 'AI prompt for generating detailed individual chapter content with proper formatting';
+    
+    updatePromptMutation.mutate({
+      promptType,
+      prompt: promptValue,
+      description
+    });
+  };
+
   const tabs = [
     { id: "prompts", label: "AI Prompts", icon: MessageSquare },
     { id: "users", label: "User Management", icon: Users },
@@ -179,98 +229,154 @@ export default function AdminPanel() {
         {/* AI Prompts Tab */}
         {activeTab === "prompts" && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* ChatGPT Prompt */}
+            <div className="grid grid-cols-1 gap-6">
+              {/* Book Outline Generation Prompt */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MessageSquare className="w-5 h-5" />
-                    <span>ChatGPT Prompt</span>
+                    <span>📚 Book Outline Generation Prompt</span>
                   </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Creates comprehensive book outlines with structured chapters and logical flow
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold mb-2">Available Template Variables:</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                      <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{"{title}"}</code>
+                      <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{"{targetAudience}"}</code>
+                      <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{"{description}"}</code>
+                      <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{"{toneStyle}"}</code>
+                      <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{"{mission}"}</code>
+                      <code className="bg-blue-100 dark:bg-blue-900/30 px-2 py-1 rounded">{"{numberOfChapters}"}</code>
+                    </div>
+                  </div>
+                  
                   <div>
-                    <Label htmlFor="chatgpt-prompt">System Prompt</Label>
+                    <Label htmlFor="book-outline-prompt">Book Outline System Prompt</Label>
                     <Textarea
-                      id="chatgpt-prompt"
-                      placeholder="Enter ChatGPT system prompt for chapter generation..."
-                      value={getConfigValue("chatgpt_prompt")}
-                      onChange={(e) => {
-                        // Handle real-time updates
-                      }}
-                      rows={8}
-                      className="mt-2"
-                      data-testid="chatgpt-prompt-input"
+                      id="book-outline-prompt"
+                      placeholder="Enter system prompt for book outline generation..."
+                      value={getPromptValue(bookOutlinePrompt)}
+                      rows={12}
+                      className="mt-2 font-mono text-sm"
+                      data-testid="book-outline-prompt-input"
                     />
                   </div>
+                  
                   <Button 
-                    onClick={() => handleSavePrompt(
-                      "chatgpt_prompt", 
-                      (document.getElementById("chatgpt-prompt") as HTMLTextAreaElement)?.value || "",
-                      "ChatGPT prompt configuration for chapter generation"
+                    onClick={() => handleUpdatePrompt(
+                      "book_outline", 
+                      (document.getElementById("book-outline-prompt") as HTMLTextAreaElement)?.value || ""
                     )}
-                    disabled={saveConfigMutation.isPending}
-                    data-testid="save-chatgpt-prompt"
+                    disabled={updatePromptMutation.isPending || outlineLoading}
+                    data-testid="save-book-outline-prompt"
+                    className="w-full"
                   >
-                    {saveConfigMutation.isPending ? (
+                    {updatePromptMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4 mr-2" />
                     )}
-                    Save ChatGPT Prompt
+                    Save Book Outline Prompt
                   </Button>
                 </CardContent>
               </Card>
 
-              {/* Claude Prompt */}
+              {/* Chapter Content Generation Prompt */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <MessageSquare className="w-5 h-5" />
-                    <span>Claude Prompt</span>
+                    <span>📝 Chapter Content Generation Prompt</span>
                   </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Generates detailed individual chapter content with proper structure and engaging insights
+                  </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
+                    <h4 className="text-sm font-semibold mb-2">Available Template Variables:</h4>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{title}"}</code>
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{targetAudience}"}</code>
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{description}"}</code>
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{toneStyle}"}</code>
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{mission}"}</code>
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{chapterNumber}"}</code>
+                      <code className="bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded">{"{chapterTitle}"}</code>
+                    </div>
+                  </div>
+                  
                   <div>
-                    <Label htmlFor="claude-prompt">System Prompt</Label>
+                    <Label htmlFor="chapter-generation-prompt">Chapter Generation System Prompt</Label>
                     <Textarea
-                      id="claude-prompt"
-                      placeholder="Enter Claude system prompt for chapter generation..."
-                      value={getConfigValue("claude_prompt")}
-                      onChange={(e) => {
-                        // Handle real-time updates
-                      }}
-                      rows={8}
-                      className="mt-2"
-                      data-testid="claude-prompt-input"
+                      id="chapter-generation-prompt"
+                      placeholder="Enter system prompt for chapter content generation..."
+                      value={getPromptValue(chapterPrompt)}
+                      rows={12}
+                      className="mt-2 font-mono text-sm"
+                      data-testid="chapter-generation-prompt-input"
                     />
                   </div>
+                  
                   <Button 
-                    onClick={() => handleSavePrompt(
-                      "claude_prompt", 
-                      (document.getElementById("claude-prompt") as HTMLTextAreaElement)?.value || "",
-                      "Claude prompt configuration for chapter generation"
+                    onClick={() => handleUpdatePrompt(
+                      "chapter_generation", 
+                      (document.getElementById("chapter-generation-prompt") as HTMLTextAreaElement)?.value || ""
                     )}
-                    disabled={saveConfigMutation.isPending}
-                    data-testid="save-claude-prompt"
+                    disabled={updatePromptMutation.isPending || chapterLoading}
+                    data-testid="save-chapter-generation-prompt"
+                    className="w-full"
                   >
-                    {saveConfigMutation.isPending ? (
+                    {updatePromptMutation.isPending ? (
                       <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <Save className="w-4 h-4 mr-2" />
                     )}
-                    Save Claude Prompt
+                    Save Chapter Generation Prompt
                   </Button>
                 </CardContent>
               </Card>
             </div>
 
-            {configsLoading && (
+            {(outlineLoading || chapterLoading) && (
               <Alert>
                 <RefreshCw className="h-4 w-4 animate-spin" />
-                <AlertDescription>Loading configurations...</AlertDescription>
+                <AlertDescription>Loading AI prompts...</AlertDescription>
               </Alert>
             )}
+
+            {/* Prompt Usage Guide */}
+            <Card>
+              <CardHeader>
+                <CardTitle>💡 Prompt Customization Guide</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Template Variables</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Variables are automatically replaced with user input</li>
+                      <li>• Use curly braces: <code>{"{variableName}"}</code></li>
+                      <li>• Variables maintain exact capitalization</li>
+                      <li>• Missing variables become empty strings</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-2">Best Practices</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Keep prompts specific and actionable</li>
+                      <li>• Include output format requirements</li>
+                      <li>• Test prompts with different book types</li>
+                      <li>• Changes take effect immediately</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
