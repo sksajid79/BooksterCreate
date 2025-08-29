@@ -61,6 +61,19 @@ function setupGracefulShutdown(server: any) {
 
 (async () => {
   try {
+    // Log deployment environment information
+    const isProduction = process.env.NODE_ENV === 'production';
+    const deploymentId = process.env.REPLIT_DEPLOYMENT_ID;
+    const port = process.env.PORT || '5000';
+    
+    if (isProduction || deploymentId) {
+      console.log('🚀 Starting in deployment environment');
+      console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`   Deployment ID: ${deploymentId || 'none'}`);
+      console.log(`   Port: ${port}`);
+      console.log(`   Database configured: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`);
+    }
+    
     // Initialize database (connection + schema verification)
     console.log('🔄 Initializing database...');
     const isDbReady = await initializeDatabase();
@@ -73,6 +86,18 @@ function setupGracefulShutdown(server: any) {
       console.error('   3. Check if database exists and credentials are correct');
       console.error('   4. Run database migrations: npm run db:push');
       console.error('   5. Contact Replit support for platform migration issues');
+      console.error('   6. Check if this is a platform infrastructure issue');
+      
+      // Enhanced error reporting for deployment failures
+      if (isProduction || deploymentId) {
+        console.error('');
+        console.error('🔧 Cloud Run deployment specific checks:');
+        console.error('   - Database provisioning status in Replit dashboard');
+        console.error('   - Network connectivity between Cloud Run and database');
+        console.error('   - Secret availability in deployment environment');
+        console.error('   - Platform migration infrastructure status');
+      }
+      
       process.exit(1);
     }
 
@@ -101,14 +126,14 @@ function setupGracefulShutdown(server: any) {
     // Other ports are firewalled. Default to 5000 if not specified.
     // this serves both the API and the client.
     // It is the only port that is not firewalled.
-    const port = parseInt(process.env.PORT || '5000', 10);
+    const portNum = parseInt(port, 10);
     
     server.listen({
-      port,
+      port: portNum,
       host: "0.0.0.0",
       reusePort: true,
     }, () => {
-      log(`✅ Server running on port ${port}`);
+      log(`✅ Server running on port ${portNum}`);
       log(`🎯 App ready for deployment verification`);
     });
 
@@ -117,10 +142,51 @@ function setupGracefulShutdown(server: any) {
     
   } catch (error) {
     console.error('❌ Server startup failed:', error);
-    console.error('💡 This might be due to:');
+    
+    // Enhanced error analysis for deployment issues
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const isDeployment = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT_ID;
+    
+    console.error('💡 Startup failure analysis:');
     console.error('   - Missing environment variables');
     console.error('   - Database connection issues');
     console.error('   - Platform infrastructure problems');
+    
+    // Database-specific error patterns
+    if (errorMessage.includes('DATABASE_URL') || errorMessage.includes('database')) {
+      console.error('');
+      console.error('🔍 Database-related failure detected:');
+      console.error('   - Verify database is provisioned in Replit dashboard');
+      console.error('   - Check DATABASE_URL secret configuration');
+      console.error('   - Ensure database is accessible from deployment environment');
+    }
+    
+    // Migration-specific error patterns
+    if (errorMessage.includes('migration') || errorMessage.includes('schema') || errorMessage.includes('table')) {
+      console.error('');
+      console.error('🔍 Migration/Schema failure detected:');
+      console.error('   - Database migrations may have failed during deployment');
+      console.error('   - Schema synchronization issue with Cloud Run');
+      console.error('   - Platform migration infrastructure error');
+      console.error('   - Contact Replit support for assistance');
+    }
+    
+    if (isDeployment) {
+      console.error('');
+      console.error('🚨 DEPLOYMENT FAILURE SUMMARY:');
+      console.error('   This appears to be a Cloud Run deployment issue.');
+      console.error('   Common causes:');
+      console.error('   1. Database migrations failed due to platform issue');
+      console.error('   2. PostgreSQL connection could not be established');
+      console.error('   3. Cloud Run infrastructure encountered internal error');
+      console.error('   ');
+      console.error('   Recommended actions:');
+      console.error('   1. Contact Replit support for platform assistance');
+      console.error('   2. Verify database secrets in Deployments pane');
+      console.error('   3. Check database accessibility from Cloud Run');
+      console.error('   4. Ensure database migrations are properly configured');
+    }
+    
     process.exit(1);
   }
 })();

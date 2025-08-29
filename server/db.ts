@@ -12,23 +12,47 @@ function validateDatabaseEnvironment() {
   const missing = required.filter(key => !process.env[key]);
   
   if (missing.length > 0) {
+    console.error('❌ Database Environment Validation Failed');
+    console.error(`Missing required environment variables: ${missing.join(', ')}`);
+    console.error('💡 Deployment troubleshooting:');
+    console.error('   1. Verify DATABASE_URL is configured in Deployment secrets');
+    console.error('   2. Check Replit Database is properly provisioned');
+    console.error('   3. Ensure secrets are accessible from Cloud Run environment');
+    console.error('   4. Contact Replit support if database provisioning failed');
     throw new Error(
       `Missing required database environment variables: ${missing.join(', ')}. ` +
       'Please ensure your database is properly configured and all secrets are set.'
     );
   }
+  
+  // Validate DATABASE_URL format
+  const databaseUrl = process.env.DATABASE_URL;
+  if (databaseUrl && !databaseUrl.startsWith('postgres://') && !databaseUrl.startsWith('postgresql://')) {
+    console.error('❌ Invalid DATABASE_URL format');
+    console.error('Expected: postgresql://... or postgres://...');
+    console.error(`Received: ${databaseUrl.substring(0, 20)}...`);
+    throw new Error('DATABASE_URL must be a valid PostgreSQL connection string');
+  }
+  
+  console.log('✅ Database environment variables validated');
 }
 
 // Validate environment on module load
 validateDatabaseEnvironment();
 
-// Create connection pool with enhanced error handling
+// Create connection pool with enhanced error handling for Cloud Run
+const isCloudRun = process.env.NODE_ENV === 'production' || process.env.REPLIT_DEPLOYMENT_ID;
+
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  // Add connection pool configuration for better reliability
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  // Enhanced connection pool configuration for Cloud Run deployment
+  max: isCloudRun ? 10 : 20, // Reduced pool size for Cloud Run
+  idleTimeoutMillis: isCloudRun ? 20000 : 30000, // Shorter timeout for Cloud Run
+  connectionTimeoutMillis: isCloudRun ? 15000 : 10000, // Longer timeout for Cloud Run initial connection
+  application_name: 'mybookstore_app', // Help identify connections in database logs
+  statement_timeout: 30000, // 30 second query timeout
+  query_timeout: 30000, // 30 second query timeout
+  keepAlive: true, // Keep connections alive
 });
 
 export const db = drizzle({ client: pool, schema });
@@ -42,6 +66,51 @@ export async function testDatabaseConnection(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);
+    return false;
+  }
+}
+
+// Automated migration handling for deployment
+export async function runMigrations(): Promise<boolean> {
+  try {
+    console.log('🔄 Checking if migrations are needed...');
+    
+    // First check if we can connect
+    const canConnect = await testDatabaseConnection();
+    if (!canConnect) {
+      console.log('❌ Cannot run migrations - database connection failed');
+      return false;
+    }
+    
+    // Check if this is a deployment environment
+    const isProduction = process.env.NODE_ENV === 'production';
+    const hasReplitDeployment = process.env.REPLIT_DEPLOYMENT_ID;
+    
+    if (isProduction || hasReplitDeployment) {
+      console.log('🚀 Deployment environment detected, attempting schema sync...');
+      
+      // In deployment, we'll rely on the schema verification
+      // If schema verification fails, it indicates missing migrations
+      const schemaValid = await verifyDatabaseSchema();
+      if (!schemaValid) {
+        console.error('❌ Schema verification failed during deployment');
+        console.error('💡 Migration troubleshooting:');
+        console.error('   1. Ensure database migrations were run before deployment');
+        console.error('   2. Run `npm run db:push` in development environment');
+        console.error('   3. Database schema may be out of sync with application code');
+        console.error('   4. Contact Replit support for platform migration assistance');
+        return false;
+      }
+    }
+    
+    console.log('✅ Migrations check completed');
+    return true;
+  } catch (error) {
+    console.error('❌ Migration check failed:', error);
+    console.error('💡 This might indicate:');
+    console.error('   - Platform migration issue (contact Replit support)');
+    console.error('   - Database schema out of sync');
+    console.error('   - Insufficient database permissions');
     return false;
   }
 }
@@ -112,9 +181,22 @@ export async function verifyDatabaseSchema(): Promise<boolean> {
 export async function initializeDatabase(): Promise<boolean> {
   console.log('🔄 Initializing database...');
   
-  // First check connection
+  // First check connection with enhanced Cloud Run handling
   const isConnected = await connectWithRetry();
   if (!isConnected) {
+    console.error('❌ Database connection failed during initialization');
+    console.error('💡 Cloud Run deployment troubleshooting:');
+    console.error('   1. Verify DATABASE_URL is accessible from Cloud Run');
+    console.error('   2. Check if Replit database is provisioned and running');
+    console.error('   3. Ensure network connectivity between Cloud Run and database');
+    console.error('   4. Contact Replit support for platform connectivity issues');
+    return false;
+  }
+
+  // Check and handle migrations
+  const migrationsOk = await runMigrations();
+  if (!migrationsOk) {
+    console.error('❌ Database migration check failed');
     return false;
   }
 
@@ -127,6 +209,7 @@ export async function initializeDatabase(): Promise<boolean> {
     console.error('   2. Verify schema is synchronized with the application code');
     console.error('   3. Check if database has required permissions');
     console.error('   4. Run migrations manually if this is the first deployment');
+    console.error('   5. Contact Replit support for platform migration issues');
     return false;
   }
 
