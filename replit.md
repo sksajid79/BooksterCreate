@@ -18,6 +18,15 @@ The application includes comprehensive documentation for self-hosting deployment
 
 ## Recent Changes (January 2025)
 
+### Admin User Management System (Latest)
+- **Default Admin User** - Automatically creates superadmin user during first deployment with credentials: username: `superadmin`, email: `admin@yourdomain.com`, password: `AdminPass123!`
+- **Complete Admin Panel** - Full user management with create, edit, delete capabilities
+- **User Role Management** - Admin can assign Free, Subscribed, or Admin roles to users
+- **Credit Management** - Admins can allocate and modify user credits 
+- **Account Control** - Activate/deactivate user accounts and manage email verification status
+- **Enhanced Security** - Admin creation script and comprehensive setup documentation for self-hosting
+- **Automatic Setup** - Default admin user created automatically during database initialization
+
 ### Enhanced Export & Interactive Features (Latest)
 - **Removed Export Pop-ups** - Streamlined export process with direct download without confirmation dialogs
 - **Cover Image Integration** - Cover images now appear as first page in PDF, HTML, and EPUB exports with proper formatting

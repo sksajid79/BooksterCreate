@@ -2,7 +2,8 @@ import { Pool, neonConfig } from '@neondatabase/serverless';
 import { drizzle } from 'drizzle-orm/neon-serverless';
 import ws from "ws";
 import * as schema from "@shared/schema";
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
+import bcrypt from 'bcryptjs';
 
 neonConfig.webSocketConstructor = ws;
 
@@ -213,8 +214,84 @@ export async function initializeDatabase(): Promise<boolean> {
     return false;
   }
 
+  // Create default admin user if no admin exists
+  const defaultAdminCreated = await createDefaultAdminUser();
+  if (!defaultAdminCreated) {
+    console.error('❌ Default admin user creation failed');
+    return false;
+  }
+
   console.log('✅ Database initialization completed successfully');
   return true;
+}
+
+// Create default admin user if no admin exists
+async function createDefaultAdminUser(): Promise<boolean> {
+  try {
+    console.log('🔄 Checking for admin users...');
+    
+    // Check if any admin user exists
+    const [adminUser] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.role, 'admin'))
+      .limit(1);
+    
+    if (adminUser) {
+      console.log('✅ Admin user already exists, skipping default creation');
+      return true;
+    }
+    
+    console.log('🔄 No admin user found, creating default superadmin...');
+    
+    // Check if superadmin email/username already exists
+    const [existingByEmail] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.email, 'admin@yourdomain.com'))
+      .limit(1);
+      
+    const [existingByUsername] = await db
+      .select()
+      .from(schema.users)
+      .where(eq(schema.users.username, 'superadmin'))
+      .limit(1);
+    
+    if (existingByEmail || existingByUsername) {
+      console.log('⚠️ Default admin credentials conflict with existing users, skipping creation');
+      return true;
+    }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash('AdminPass123!', 12);
+    
+    // Create default admin user
+    const [defaultAdmin] = await db
+      .insert(schema.users)
+      .values({
+        username: 'superadmin',
+        email: 'admin@yourdomain.com',
+        password: hashedPassword,
+        role: 'admin',
+        credits: 999,
+        isActive: true,
+        emailVerified: true,
+        creditsResetDate: new Date(),
+      })
+      .returning();
+    
+    console.log('✅ Default superadmin user created successfully:');
+    console.log('   Username: superadmin');
+    console.log('   Email: admin@yourdomain.com');
+    console.log('   Role: admin');
+    console.log('   Credits: 999');
+    console.log('💡 Change these credentials after first login for security');
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error creating default admin user:', error);
+    return false;
+  }
 }
 
 // Graceful shutdown function
