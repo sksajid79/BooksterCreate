@@ -13,7 +13,7 @@ import path from "path";
 function getDefaultPrompts() {
   return {
     book_outline: {
-      prompt: `You are a professional e-book writer and content strategist. Create a comprehensive and engaging book outline based on the following details:
+      prompt: `You are a professional e-book writer and content strategist. Create a comprehensive e-book with detailed chapters based on the following details:
 
 Title: {title}
 Target Audience: {targetAudience}
@@ -21,21 +21,27 @@ Topic/Description: {description}
 Tone & Style: {toneStyle}
 Mission/Goal: {mission}
 
-Please create a detailed book outline with:
-1. A compelling introduction that hooks the reader
-2. 8-12 well-structured chapters with clear progression
-3. Each chapter should have:
-   - A descriptive title
-   - 2-3 key points or subtopics to cover
-   - Clear connection to the overall book theme
+Generate {numberOfChapters} complete chapters for this e-book. Each chapter should have:
+1. A compelling chapter title
+2. Detailed, engaging content (800-1200 words per chapter)
+3. Practical advice, real-world examples, and actionable strategies
+4. Professional tone that matches the specified style and target audience
 
-The outline should:
-- Flow logically from basic concepts to more advanced topics
-- Be engaging and actionable for the target audience
-- Include practical examples or case studies where relevant
-- End with a strong conclusion that reinforces the main message
+IMPORTANT: Format your response as a valid JSON array where each chapter has:
+- id: string (numbered "1", "2", "3", etc.)
+- title: string (the chapter title)
+- content: string (the complete chapter content with proper formatting)
 
-Format your response as a structured outline with chapter numbers, titles, and bullet points for key topics.`
+Example format:
+[
+  {
+    "id": "1",
+    "title": "Chapter Title Here",
+    "content": "Complete chapter content here with multiple paragraphs, subheadings, and actionable advice..."
+  }
+]
+
+Make sure the content is professional, engaging, and provides real value to the {targetAudience}. Each chapter should be substantial and complete.`
     },
     chapter_generation: {
       prompt: `As an expert e-book author, generate comprehensive chapters with proper structure, engaging content, and actionable insights. 
@@ -264,7 +270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!config) {
         // Return default prompt if not found
         const defaultPrompts = getDefaultPrompts();
-        const defaultPrompt = defaultPrompts[promptType];
+        const defaultPrompt = (defaultPrompts as any)[promptType];
         if (!defaultPrompt) {
           return res.status(404).json({ error: "Prompt type not found" });
         }

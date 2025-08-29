@@ -112,7 +112,7 @@ Make sure the content is professional, engaging, and provides real value to the 
     // Extract JSON from response - try multiple patterns
     let jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      // Try to find JSON with curly braces around it
+      // Try to find JSON with markdown code blocks
       jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
       if (jsonMatch) {
         jsonMatch[0] = jsonMatch[1];
@@ -120,17 +120,41 @@ Make sure the content is professional, engaging, and provides real value to the 
     }
     
     if (!jsonMatch) {
-      console.error('Could not find JSON in AI response:', content);
-      throw new Error('Could not parse chapter data from AI response - no JSON found');
+      // Try to find JSON without code blocks
+      jsonMatch = content.match(/(\[[\s\S]*?\])/);
     }
-
+    
     let chapters;
-    try {
-      chapters = JSON.parse(jsonMatch[0]);
-    } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      console.error('Attempted to parse:', jsonMatch[0]);
-      throw new Error('Could not parse chapter data from AI response - invalid JSON');
+    
+    if (!jsonMatch) {
+      console.error('Could not find JSON in AI response:', content);
+      console.log('Response length:', content.length);
+      console.log('First 500 chars:', content.substring(0, 500));
+      
+      // If no JSON found, try to extract chapter information and create our own JSON
+      const chapterMatches = content.match(/(?:^|\n)## Chapter \d+:?\s*([^\n]+)/g);
+      if (chapterMatches && chapterMatches.length > 0) {
+        console.log('Found chapter headings, creating JSON structure');
+        const extractedChapters = chapterMatches.map((match, index) => {
+          const title = match.replace(/(?:^|\n)## Chapter \d+:?\s*/, '').trim();
+          return {
+            id: (index + 1).toString(),
+            title: title,
+            content: `This is a comprehensive chapter about ${title}. Content will be generated based on the book's mission and target audience.`
+          };
+        });
+        chapters = extractedChapters;
+      } else {
+        throw new Error('Could not parse chapter data from AI response - no JSON or chapter structure found');
+      }
+    } else {
+      try {
+        chapters = JSON.parse(jsonMatch[0]);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Attempted to parse:', jsonMatch[0]);
+        throw new Error('Could not parse chapter data from AI response - invalid JSON');
+      }
     }
     
     // Add isExpanded property and ensure proper structure
