@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +46,8 @@ export default function AdminPanel() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("prompts");
+  const [bookOutlineValue, setBookOutlineValue] = useState("");
+  const [chapterGenerationValue, setChapterGenerationValue] = useState("");
 
   // Redirect if not admin
   if (!isAuthenticated || user?.role !== "admin") {
@@ -82,6 +84,19 @@ export default function AdminPanel() {
     queryKey: ["/api/admin/prompts/chapter_generation"],
     enabled: isAuthenticated && user?.role === "admin",
   });
+
+  // Update state when data is loaded
+  useEffect(() => {
+    if (bookOutlinePrompt?.configValue?.prompt) {
+      setBookOutlineValue(bookOutlinePrompt.configValue.prompt);
+    }
+  }, [bookOutlinePrompt]);
+
+  useEffect(() => {
+    if (chapterPrompt?.configValue?.prompt) {
+      setChapterGenerationValue(chapterPrompt.configValue.prompt);
+    }
+  }, [chapterPrompt]);
 
   // Fetch users
   const { data: users, isLoading: usersLoading } = useQuery({
@@ -177,10 +192,12 @@ export default function AdminPanel() {
     return promptData.configValue?.prompt || "";
   };
 
-  const handleUpdatePrompt = (promptType: string, promptValue: string) => {
+  const handleUpdatePrompt = (promptType: string) => {
     const description = promptType === 'book_outline' 
       ? 'AI prompt for generating comprehensive book outlines with structured chapters'
       : 'AI prompt for generating detailed individual chapter content with proper formatting';
+    
+    const promptValue = promptType === 'book_outline' ? bookOutlineValue : chapterGenerationValue;
     
     updatePromptMutation.mutate({
       promptType,
@@ -259,7 +276,8 @@ export default function AdminPanel() {
                     <Textarea
                       id="book-outline-prompt"
                       placeholder="Enter system prompt for book outline generation..."
-                      value={getPromptValue(bookOutlinePrompt)}
+                      value={bookOutlineValue}
+                      onChange={(e) => setBookOutlineValue(e.target.value)}
                       rows={12}
                       className="mt-2 font-mono text-sm"
                       data-testid="book-outline-prompt-input"
@@ -267,10 +285,7 @@ export default function AdminPanel() {
                   </div>
                   
                   <Button 
-                    onClick={() => handleUpdatePrompt(
-                      "book_outline", 
-                      (document.getElementById("book-outline-prompt") as HTMLTextAreaElement)?.value || ""
-                    )}
+                    onClick={() => handleUpdatePrompt("book_outline")}
                     disabled={updatePromptMutation.isPending || outlineLoading}
                     data-testid="save-book-outline-prompt"
                     className="w-full"
@@ -315,7 +330,8 @@ export default function AdminPanel() {
                     <Textarea
                       id="chapter-generation-prompt"
                       placeholder="Enter system prompt for chapter content generation..."
-                      value={getPromptValue(chapterPrompt)}
+                      value={chapterGenerationValue}
+                      onChange={(e) => setChapterGenerationValue(e.target.value)}
                       rows={12}
                       className="mt-2 font-mono text-sm"
                       data-testid="chapter-generation-prompt-input"
@@ -323,10 +339,7 @@ export default function AdminPanel() {
                   </div>
                   
                   <Button 
-                    onClick={() => handleUpdatePrompt(
-                      "chapter_generation", 
-                      (document.getElementById("chapter-generation-prompt") as HTMLTextAreaElement)?.value || ""
-                    )}
+                    onClick={() => handleUpdatePrompt("chapter_generation")}
                     disabled={updatePromptMutation.isPending || chapterLoading}
                     data-testid="save-chapter-generation-prompt"
                     className="w-full"

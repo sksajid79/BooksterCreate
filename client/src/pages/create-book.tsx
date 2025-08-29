@@ -87,12 +87,19 @@ export default function CreateBook() {
   // Book creation and persistence mutations
   const createBookMutation = useMutation({
     mutationFn: async (bookData: any) => {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/books', {
         method: 'POST',
         body: JSON.stringify(bookData),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to create book');
@@ -106,12 +113,19 @@ export default function CreateBook() {
 
   const updateBookMutation = useMutation({
     mutationFn: async ({ bookId, updates }: { bookId: string, updates: any }) => {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/books/${bookId}`, {
         method: 'PUT',
         body: JSON.stringify(updates),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to update book');
@@ -122,6 +136,15 @@ export default function CreateBook() {
 
   const saveProgressMutation = useMutation({
     mutationFn: async ({ bookId, stepName, stepData }: { bookId: string, stepName: string, stepData: any }) => {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/books/${bookId}/progress`, {
         method: 'POST',
         body: JSON.stringify({
@@ -130,9 +153,7 @@ export default function CreateBook() {
           isCompleted: true,
           completedAt: new Date().toISOString()
         }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to save progress');
@@ -143,12 +164,19 @@ export default function CreateBook() {
 
   const generateChaptersMutation = useMutation({
     mutationFn: async (bookDetails: any) => {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/chapters/generate', {
         method: 'POST',
         body: JSON.stringify(bookDetails),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to generate chapters');
@@ -167,12 +195,19 @@ export default function CreateBook() {
 
   const regenerateChapterMutation = useMutation({
     mutationFn: async ({ chapterTitle, bookDetails }: { chapterTitle: string, bookDetails: any }) => {
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch('/api/chapters/regenerate', {
         method: 'POST',
         body: JSON.stringify({ chapterTitle, bookDetails }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
       if (!response.ok) {
         throw new Error('Failed to regenerate chapter');
@@ -404,11 +439,18 @@ export default function CreateBook() {
         language: formData.language
       };
 
+      const token = localStorage.getItem("auth_token");
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`/api/export/${format}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
         body: JSON.stringify(exportData),
       });
 
