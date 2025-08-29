@@ -13,7 +13,7 @@ import path from "path";
 function getDefaultPrompts() {
   return {
     book_outline: {
-      prompt: `You are a world-class e-book author and content strategist with expertise in creating bestselling non-fiction books. Your mission is to create an exceptional {numberOfChapters}-chapter e-book that will become the definitive guide for {targetAudience}.
+      prompt: `You are a world-class e-book author and content strategist. Create a comprehensive chapter structure for a {numberOfChapters}-chapter e-book that will become the definitive guide for {targetAudience}.
 
 ## BOOK SPECIFICATIONS
 **Title:** {title}
@@ -22,51 +22,49 @@ function getDefaultPrompts() {
 **Tone & Style:** {toneStyle}
 **Core Mission:** {mission}
 
-## CONTENT REQUIREMENTS FOR EACH CHAPTER
-Each chapter must be a masterpiece that includes:
+## OUTLINE REQUIREMENTS
 
-### STRUCTURE (2000-3000 words per chapter)
-- **Compelling opening hook** that immediately engages {targetAudience}
-- **2-3 main sections** with descriptive subheadings (##)
-- **Multiple subsections** (###) for detailed exploration
-- **Practical implementation section** with step-by-step guidance
-- **Real-world examples and case studies** relevant to {targetAudience}
-- **Actionable takeaways** and summary
+### CHAPTER STRUCTURE ONLY
+Your task is to create ONLY the chapter outline with compelling titles. Do NOT generate any chapter content - that will be created individually later.
 
-### QUALITY STANDARDS
-- **Expert-level depth:** Provide insights that go beyond surface-level advice
-- **Practical focus:** Every concept must include specific, actionable steps
-- **Evidence-based:** Reference research, studies, or proven methodologies where appropriate
-- **Engaging narrative:** Use storytelling, analogies, and relatable examples
-- **Progressive learning:** Each chapter builds upon previous concepts
-- **Professional formatting:** Use markdown extensively (##, ###, **, -, bullet points)
+### CHAPTER TITLE GUIDELINES
+- Create {numberOfChapters} powerful, benefit-focused chapter titles
+- Each title should be specific and intriguing to {targetAudience}
+- Titles should flow logically from beginner to advanced concepts
+- Use {toneStyle} language that resonates with {targetAudience}
+- Ensure progressive learning from chapter to chapter
+- Focus on transformation and practical outcomes
 
-### CONTENT ELEMENTS TO INCLUDE
-- Industry best practices and cutting-edge strategies
-- Common mistakes and how to avoid them
-- Tools, resources, and frameworks
-- Success stories and transformation examples
-- Troubleshooting guides for common challenges
-- Future-focused insights and trends
+### LOGICAL PROGRESSION
+Structure the chapters to follow a natural learning path:
+1. **Foundation chapters** - Core concepts and understanding
+2. **Implementation chapters** - Practical strategies and methods  
+3. **Advanced chapters** - Optimization and mastery
+4. **Integration chapters** - Bringing it all together
 
 ## JSON OUTPUT FORMAT
-Return ONLY a valid JSON array with no additional text, explanations, or formatting:
+Return ONLY a valid JSON array with chapter titles and empty content placeholders:
 
 [
   {
     "id": "1",
     "title": "Compelling Chapter Title That Hooks the Reader",
-    "content": "## Opening Hook Section\n\nStart with a powerful story, statistic, or question that immediately captures attention...\n\n## Core Concept 1: Main Learning Objective\n\nProvide comprehensive explanation with depth and nuance...\n\n### Practical Implementation\n\nStep-by-step guidance for immediate application...\n\n### Real-World Example\n\nDetailed case study or example...\n\n## Core Concept 2: Advanced Strategies\n\nBuild upon foundation with sophisticated approaches...\n\n### Common Pitfalls to Avoid\n\nSpecific mistakes and prevention strategies...\n\n## Action Plan and Next Steps\n\nClear, specific actions readers can take immediately...\n\n### Key Takeaways\n\n- Specific, memorable insight 1\n- Actionable strategy 2\n- Important mindset shift 3"
+    "content": ""
+  },
+  {
+    "id": "2", 
+    "title": "Building Upon the Foundation",
+    "content": ""
   }
 ]
 
-## FINAL INSTRUCTIONS
-- Create titles that are specific, benefit-focused, and intriguing
-- Ensure each chapter delivers transformational value to {targetAudience}
-- Maintain consistent {toneStyle} throughout
-- Make content immediately actionable and practically applicable
-- Use engaging, conversational language while maintaining professional authority
-- Return ONLY the JSON array - no explanations, no markdown code blocks, just the raw JSON`
+## CRITICAL INSTRUCTIONS
+- Generate ONLY chapter titles - leave all "content" fields empty ("")
+- Create titles that are specific, benefit-focused, and compelling
+- Ensure logical flow from basic to advanced concepts
+- Make each title irresistible to {targetAudience}
+- Return ONLY the JSON array - no explanations, no markdown code blocks
+- Each chapter title should promise clear value and transformation`
     },
     chapter_generation: {
       prompt: `You are a world-renowned expert author specializing in {targetAudience} success strategies. You're writing the definitive chapter on "{chapterTitle}" for the book "{title}". This chapter must be exceptional - the kind of content that readers will highlight, share, and return to repeatedly.
