@@ -27,21 +27,22 @@ Generate {numberOfChapters} complete chapters for this e-book. Each chapter shou
 3. Practical advice, real-world examples, and actionable strategies
 4. Professional tone that matches the specified style and target audience
 
-IMPORTANT: Format your response as a valid JSON array where each chapter has:
-- id: string (numbered "1", "2", "3", etc.)
-- title: string (the chapter title)
-- content: string (the complete chapter content with proper formatting)
+CRITICAL: You MUST respond with ONLY a valid JSON array in the following format. Do not include any explanation, commentary, or markdown formatting. Start your response directly with [ and end with ]:
 
-Example format:
 [
   {
     "id": "1",
     "title": "Chapter Title Here",
     "content": "Complete chapter content here with multiple paragraphs, subheadings, and actionable advice..."
+  },
+  {
+    "id": "2", 
+    "title": "Second Chapter Title",
+    "content": "Second chapter content with detailed information..."
   }
 ]
 
-Make sure the content is professional, engaging, and provides real value to the {targetAudience}. Each chapter should be substantial and complete.`
+Make sure the content is professional, engaging, and provides real value to the {targetAudience}. Each chapter should be substantial and complete. Return only the JSON array, nothing else.`
     },
     chapter_generation: {
       prompt: `As an expert e-book author, generate comprehensive chapters with proper structure, engaging content, and actionable insights. 

@@ -109,51 +109,77 @@ Make sure the content is professional, engaging, and provides real value to the 
     const content = response.content[0].type === 'text' ? response.content[0].text : '';
     console.log('AI Response content:', content);
     
-    // Extract JSON from response - try multiple patterns
-    let jsonMatch = content.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      // Try to find JSON with markdown code blocks
-      jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
-      if (jsonMatch) {
-        jsonMatch[0] = jsonMatch[1];
+    // Extract JSON from response - improved parsing logic
+    let chapters;
+    let jsonString = '';
+    
+    // First try to find JSON in markdown code blocks
+    const codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+    if (codeBlockMatch) {
+      jsonString = codeBlockMatch[1].trim();
+    } else {
+      // Try to find JSON array directly
+      const directJsonMatch = content.match(/\[\s*\{[\s\S]*?\}\s*\]/);
+      if (directJsonMatch) {
+        jsonString = directJsonMatch[0];
+      } else {
+        // Try to find JSON with looser matching
+        const looserMatch = content.match(/(\[[\s\S]*\])/);
+        if (looserMatch) {
+          jsonString = looserMatch[1];
+        }
       }
     }
     
-    if (!jsonMatch) {
-      // Try to find JSON without code blocks
-      jsonMatch = content.match(/(\[[\s\S]*?\])/);
+    if (jsonString) {
+      try {
+        chapters = JSON.parse(jsonString);
+        console.log('Successfully parsed JSON with', chapters.length, 'chapters');
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+        console.error('Attempted to parse:', jsonString.substring(0, 200) + '...');
+        
+        // Try to clean and fix common JSON issues
+        let cleanedJson = jsonString
+          .replace(/,\s*}/g, '}') // Remove trailing commas
+          .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+          .replace(/[\u201C\u201D]/g, '"') // Replace smart quotes
+          .replace(/[\u2018\u2019]/g, "'"); // Replace smart apostrophes
+        
+        try {
+          chapters = JSON.parse(cleanedJson);
+          console.log('Successfully parsed cleaned JSON with', chapters.length, 'chapters');
+        } catch (secondError) {
+          console.error('Failed to parse cleaned JSON:', secondError);
+          chapters = null; // Fall back to manual extraction
+        }
+      }
     }
     
-    let chapters;
-    
-    if (!jsonMatch) {
-      console.error('Could not find JSON in AI response:', content);
+    if (!jsonString || !chapters) {
+      console.error('Could not find valid JSON in AI response');
       console.log('Response length:', content.length);
       console.log('First 500 chars:', content.substring(0, 500));
       
-      // If no JSON found, try to extract chapter information and create our own JSON
-      const chapterMatches = content.match(/(?:^|\n)## Chapter \d+:?\s*([^\n]+)/g);
+      // Try to extract chapter information and create our own JSON
+      const chapterMatches = content.match(/(?:^|\n)(?:##?\s*)?(?:Chapter\s*\d+:?\s*)?([^\n]+)/g);
       if (chapterMatches && chapterMatches.length > 0) {
-        console.log('Found chapter headings, creating JSON structure');
-        const extractedChapters = chapterMatches.map((match, index) => {
-          const title = match.replace(/(?:^|\n)## Chapter \d+:?\s*/, '').trim();
-          return {
-            id: (index + 1).toString(),
-            title: title,
-            content: `This is a comprehensive chapter about ${title}. Content will be generated based on the book's mission and target audience.`
-          };
-        });
+        console.log('Found potential chapter headings, creating JSON structure');
+        const extractedChapters = chapterMatches
+          .filter(match => match.trim().length > 10) // Filter out short matches
+          .slice(0, bookDetails.numberOfChapters || 5) // Limit to requested number
+          .map((match, index) => {
+            const title = match.replace(/(?:^|\n)(?:##?\s*)?(?:Chapter\s*\d+:?\s*)?/, '').trim();
+            return {
+              id: (index + 1).toString(),
+              title: title,
+              content: `This comprehensive chapter covers ${title}. The content will be tailored to ${bookDetails.targetAudience} with a ${bookDetails.toneStyle} tone, focusing on ${bookDetails.mission}.`
+            };
+          });
         chapters = extractedChapters;
+        console.log('Created', chapters.length, 'chapters from extracted headings');
       } else {
         throw new Error('Could not parse chapter data from AI response - no JSON or chapter structure found');
-      }
-    } else {
-      try {
-        chapters = JSON.parse(jsonMatch[0]);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError);
-        console.error('Attempted to parse:', jsonMatch[0]);
-        throw new Error('Could not parse chapter data from AI response - invalid JSON');
       }
     }
     
