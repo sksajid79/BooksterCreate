@@ -39,6 +39,15 @@ export const books = pgTable("books", {
   
   // Step 4: Template
   selectedTemplate: text("selected_template").default("original"),
+  customTheme: jsonb("custom_theme").$type<{
+    backgroundColor: string;
+    textColor: string;
+    fontSize: string;
+    fontFamily: string;
+    lineHeight: string;
+    marginBottom: string;
+    accentColor: string;
+  }>(),
   
   // Step 5: Cover
   coverImageUrl: text("cover_image_url"),

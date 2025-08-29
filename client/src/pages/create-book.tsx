@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye, BookOpen, Code, Smartphone, Zap, FileCheck } from "lucide-react";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye, BookOpen, Code, Smartphone, Zap, FileCheck, Settings, Type, Paintbrush } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -38,6 +38,16 @@ interface Chapter {
   isGenerating?: boolean;
 }
 
+interface CustomTheme {
+  backgroundColor: string;
+  textColor: string;
+  fontSize: string;
+  fontFamily: string;
+  lineHeight: string;
+  marginBottom: string;
+  accentColor: string;
+}
+
 interface BookFormData {
   method: CreationMethod;
   author: string;
@@ -54,6 +64,7 @@ interface BookFormData {
   numberOfChapters: number;
   chapters: Chapter[];
   selectedTemplate: string;
+  customTheme?: CustomTheme;
   coverImage: File | null;
   coverImageUrl: string | null;
 }
@@ -66,6 +77,7 @@ export default function CreateBook() {
   const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [currentBookId, setCurrentBookId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showThemeCustomizer, setShowThemeCustomizer] = useState(false);
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState<BookFormData>({
     method: null,
@@ -83,6 +95,7 @@ export default function CreateBook() {
     numberOfChapters: 5,
     chapters: [],
     selectedTemplate: "original",
+    customTheme: undefined,
     coverImage: null,
     coverImageUrl: null
   });
@@ -526,7 +539,8 @@ export default function CreateBook() {
         fontSize: "16px",
         fontFamily: "serif",
         lineHeight: "1.6",
-        marginBottom: "1rem"
+        marginBottom: "1rem",
+        accentColor: "#3b82f6"
       }
     },
     {
@@ -541,7 +555,8 @@ export default function CreateBook() {
         fontSize: "17px",
         fontFamily: "sans-serif",
         lineHeight: "1.7",
-        marginBottom: "1.5rem"
+        marginBottom: "1.5rem",
+        accentColor: "#8b5cf6"
       }
     },
     {
@@ -556,7 +571,8 @@ export default function CreateBook() {
         fontSize: "16px",
         fontFamily: "serif",
         lineHeight: "1.8",
-        marginBottom: "1.25rem"
+        marginBottom: "1.25rem",
+        accentColor: "#f59e0b"
       }
     },
     {
@@ -571,7 +587,8 @@ export default function CreateBook() {
         fontSize: "15px",
         fontFamily: "serif",
         lineHeight: "1.65",
-        marginBottom: "1rem"
+        marginBottom: "1rem",
+        accentColor: "#6b7280"
       }
     },
     {
@@ -586,7 +603,8 @@ export default function CreateBook() {
         fontSize: "16px",
         fontFamily: "sans-serif",
         lineHeight: "1.6",
-        marginBottom: "1.2rem"
+        marginBottom: "1.2rem",
+        accentColor: "#0ea5e9"
       }
     },
     {
@@ -601,15 +619,46 @@ export default function CreateBook() {
         fontSize: "14px",
         fontFamily: "serif",
         lineHeight: "1.75",
-        marginBottom: "1rem"
+        marginBottom: "1rem",
+        accentColor: "#059669"
       }
     }
   ];
 
-  // Get template style based on selected template
+  // Get template style based on selected template or custom theme
   const getTemplateStyle = () => {
+    if (formData.customTheme) {
+      return formData.customTheme;
+    }
     const template = templates.find(t => t.id === formData.selectedTemplate);
     return template ? template.preview : templates[0].preview; // Default to original
+  };
+
+  // Theme customization handlers
+  const handleThemeUpdate = (themeUpdates: Partial<CustomTheme>) => {
+    const baseTemplate = templates.find(t => t.id === formData.selectedTemplate);
+    const currentTemplate = baseTemplate ? baseTemplate.preview : templates[0].preview;
+    const currentTheme = formData.customTheme || {
+      ...currentTemplate,
+      accentColor: '#3b82f6' // Default accent color
+    };
+    
+    const newTheme: CustomTheme = {
+      ...currentTheme,
+      ...themeUpdates
+    };
+    
+    setFormData(prev => ({
+      ...prev,
+      customTheme: newTheme
+    }));
+  };
+
+  const resetToOriginalTemplate = () => {
+    setFormData(prev => ({
+      ...prev,
+      customTheme: undefined
+    }));
   };
 
   const templateStyle = getTemplateStyle();
@@ -1207,6 +1256,234 @@ export default function CreateBook() {
               })}
             </div>
 
+            {/* Theme Customization Section */}
+            {formData.selectedTemplate && (
+              <Card className="bg-blue-50 border-blue-200">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center space-x-3">
+                      <Paintbrush className="w-6 h-6 text-blue-600" />
+                      <div>
+                        <h3 className="font-semibold text-blue-800">One-Click Theme Customization</h3>
+                        <p className="text-sm text-blue-700">
+                          Personalize your book's appearance with custom colors and fonts
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => setShowThemeCustomizer(!showThemeCustomizer)}
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                      data-testid="button-customize-theme"
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      {showThemeCustomizer ? 'Close Customizer' : 'Customize Theme'}
+                    </Button>
+                  </div>
+                  
+                  {showThemeCustomizer && (
+                    <div className="bg-white rounded-lg p-6 border border-blue-200">
+                      <div className="grid md:grid-cols-2 gap-8">
+                        {/* Customization Controls */}
+                        <div className="space-y-6">
+                          <h4 className="font-semibold text-lg mb-4 flex items-center space-x-2">
+                            <Type className="w-5 h-5" />
+                            <span>Theme Settings</span>
+                          </h4>
+                          
+                          {/* Background Color */}
+                          <div>
+                            <Label className="text-sm font-medium mb-2 block">Background Color</Label>
+                            <div className="flex items-center space-x-3">
+                              <input
+                                type="color"
+                                value={getTemplateStyle().backgroundColor}
+                                onChange={(e) => handleThemeUpdate({ backgroundColor: e.target.value })}
+                                className="w-12 h-10 rounded border border-border cursor-pointer"
+                                data-testid="input-background-color"
+                              />
+                              <Input
+                                type="text"
+                                value={getTemplateStyle().backgroundColor}
+                                onChange={(e) => handleThemeUpdate({ backgroundColor: e.target.value })}
+                                className="flex-1"
+                                placeholder="#ffffff"
+                                data-testid="input-background-hex"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Text Color */}
+                          <div>
+                            <Label className="text-sm font-medium mb-2 block">Text Color</Label>
+                            <div className="flex items-center space-x-3">
+                              <input
+                                type="color"
+                                value={getTemplateStyle().textColor}
+                                onChange={(e) => handleThemeUpdate({ textColor: e.target.value })}
+                                className="w-12 h-10 rounded border border-border cursor-pointer"
+                                data-testid="input-text-color"
+                              />
+                              <Input
+                                type="text"
+                                value={getTemplateStyle().textColor}
+                                onChange={(e) => handleThemeUpdate({ textColor: e.target.value })}
+                                className="flex-1"
+                                placeholder="#000000"
+                                data-testid="input-text-hex"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Accent Color */}
+                          <div>
+                            <Label className="text-sm font-medium mb-2 block">Accent Color</Label>
+                            <div className="flex items-center space-x-3">
+                              <input
+                                type="color"
+                                value={getTemplateStyle().accentColor || '#3b82f6'}
+                                onChange={(e) => handleThemeUpdate({ accentColor: e.target.value })}
+                                className="w-12 h-10 rounded border border-border cursor-pointer"
+                                data-testid="input-accent-color"
+                              />
+                              <Input
+                                type="text"
+                                value={getTemplateStyle().accentColor || '#3b82f6'}
+                                onChange={(e) => handleThemeUpdate({ accentColor: e.target.value })}
+                                className="flex-1"
+                                placeholder="#3b82f6"
+                                data-testid="input-accent-hex"
+                              />
+                            </div>
+                          </div>
+                          
+                          {/* Font Family */}
+                          <div>
+                            <Label className="text-sm font-medium mb-2 block">Font Family</Label>
+                            <Select 
+                              value={getTemplateStyle().fontFamily} 
+                              onValueChange={(value) => handleThemeUpdate({ fontFamily: value })}
+                              data-testid="select-font-family"
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="serif">Serif (Traditional)</SelectItem>
+                                <SelectItem value="sans-serif">Sans-serif (Modern)</SelectItem>
+                                <SelectItem value="monospace">Monospace (Code)</SelectItem>
+                                <SelectItem value="Georgia, serif">Georgia</SelectItem>
+                                <SelectItem value="Times New Roman, serif">Times New Roman</SelectItem>
+                                <SelectItem value="Arial, sans-serif">Arial</SelectItem>
+                                <SelectItem value="Helvetica, sans-serif">Helvetica</SelectItem>
+                                <SelectItem value="Verdana, sans-serif">Verdana</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {/* Font Size */}
+                          <div>
+                            <Label className="text-sm font-medium mb-2 block">Font Size</Label>
+                            <Select 
+                              value={getTemplateStyle().fontSize} 
+                              onValueChange={(value) => handleThemeUpdate({ fontSize: value })}
+                              data-testid="select-font-size"
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="12px">Small (12px)</SelectItem>
+                                <SelectItem value="14px">Medium (14px)</SelectItem>
+                                <SelectItem value="16px">Large (16px)</SelectItem>
+                                <SelectItem value="18px">Extra Large (18px)</SelectItem>
+                                <SelectItem value="20px">XXL (20px)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {/* Line Height */}
+                          <div>
+                            <Label className="text-sm font-medium mb-2 block">Line Spacing</Label>
+                            <Select 
+                              value={getTemplateStyle().lineHeight} 
+                              onValueChange={(value) => handleThemeUpdate({ lineHeight: value })}
+                              data-testid="select-line-height"
+                            >
+                              <SelectTrigger>
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="1.4">Tight (1.4)</SelectItem>
+                                <SelectItem value="1.6">Normal (1.6)</SelectItem>
+                                <SelectItem value="1.8">Relaxed (1.8)</SelectItem>
+                                <SelectItem value="2.0">Loose (2.0)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          
+                          {/* Reset Button */}
+                          <div className="pt-4 border-t border-border">
+                            <Button
+                              variant="outline"
+                              onClick={resetToOriginalTemplate}
+                              disabled={!formData.customTheme}
+                              className="w-full"
+                              data-testid="button-reset-theme"
+                            >
+                              <RefreshCw className="w-4 h-4 mr-2" />
+                              Reset to Original Template
+                            </Button>
+                          </div>
+                        </div>
+                        
+                        {/* Live Preview */}
+                        <div className="space-y-4">
+                          <h4 className="font-semibold text-lg mb-4 flex items-center space-x-2">
+                            <Eye className="w-5 h-5" />
+                            <span>Live Preview</span>
+                          </h4>
+                          
+                          <div className="border border-border rounded-lg p-6 min-h-[400px]">
+                            <div 
+                              className="space-y-4"
+                              style={{
+                                backgroundColor: getTemplateStyle().backgroundColor,
+                                color: getTemplateStyle().textColor,
+                                fontSize: getTemplateStyle().fontSize,
+                                fontFamily: getTemplateStyle().fontFamily,
+                                lineHeight: getTemplateStyle().lineHeight,
+                                padding: "1.5rem",
+                                borderRadius: "0.5rem",
+                                border: `2px solid ${getTemplateStyle().accentColor || '#3b82f6'}`,
+                                minHeight: "350px"
+                              }}
+                              data-testid="theme-preview"
+                            >
+                              <h1 className="text-2xl font-bold" style={{ color: getTemplateStyle().accentColor || '#3b82f6' }}>
+                                Chapter 1: Understanding Your Teen
+                              </h1>
+                              <p style={{ marginBottom: getTemplateStyle().marginBottom }}>
+                                Raising a teenager can feel like navigating uncharted territory. The rapid physical, emotional, and cognitive changes they undergo often leave parents bewildered and searching for answers.
+                              </p>
+                              <p style={{ marginBottom: getTemplateStyle().marginBottom }}>
+                                This chapter will explore the science behind adolescent development and provide you with practical strategies to build stronger connections with your teen.
+                              </p>
+                              <h2 className="text-lg font-semibold mt-6 mb-3" style={{ color: getTemplateStyle().accentColor || '#3b82f6' }}>
+                                The Developing Brain
+                              </h2>
+                              <p style={{ marginBottom: getTemplateStyle().marginBottom }}>
+                                Understanding what's happening in your teenager's brain is the first step toward building empathy and improving communication.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Selected Template Summary */}
             {formData.selectedTemplate && (
               <Card className="bg-green-50 border-green-200">
@@ -1217,9 +1494,10 @@ export default function CreateBook() {
                       <div>
                         <h3 className="font-semibold text-green-800">
                           Template Selected: {templates.find(t => t.id === formData.selectedTemplate)?.name}
+                          {formData.customTheme && <span className="ml-2 px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Customized</span>}
                         </h3>
                         <p className="text-sm text-green-700">
-                          {templates.find(t => t.id === formData.selectedTemplate)?.description}
+                          {formData.customTheme ? "Theme customized to your preferences" : templates.find(t => t.id === formData.selectedTemplate)?.description}
                         </p>
                       </div>
                     </div>

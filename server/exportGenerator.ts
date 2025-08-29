@@ -6,6 +6,16 @@ import { marked } from 'marked';
 import JSZip from 'jszip';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 
+interface CustomTheme {
+  backgroundColor: string;
+  textColor: string;
+  fontSize: string;
+  fontFamily: string;
+  lineHeight: string;
+  marginBottom: string;
+  accentColor: string;
+}
+
 interface BookData {
   title: string;
   subtitle?: string;
@@ -17,6 +27,7 @@ interface BookData {
     content: string;
   }>;
   selectedTemplate: string;
+  customTheme?: CustomTheme;
   coverImageUrl?: string;
   language: string;
 }
@@ -97,59 +108,79 @@ function removeDuplicateChapterTitle(content: string, chapterTitle: string): str
   return cleanedContent;
 }
 
-// Template styles mapping
-const getTemplateStyles = (templateId: string) => {
+// Template styles mapping with custom theme support
+const getTemplateStyles = (templateId: string, customTheme?: CustomTheme) => {
   const templates = {
     original: {
       fontFamily: 'serif',
       fontSize: '16px',
       lineHeight: '1.6',
       color: '#1f2937',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      accentColor: '#3b82f6'
     },
     modern: {
       fontFamily: 'sans-serif',
       fontSize: '17px',
       lineHeight: '1.7',
       color: '#0f172a',
-      backgroundColor: '#f8fafc'
+      backgroundColor: '#f8fafc',
+      accentColor: '#8b5cf6'
     },
     creative: {
       fontFamily: 'serif',
       fontSize: '16px',
       lineHeight: '1.8',
       color: '#92400e',
-      backgroundColor: '#fef3c7'
+      backgroundColor: '#fef3c7',
+      accentColor: '#f59e0b'
     },
     classic: {
       fontFamily: 'serif',
       fontSize: '15px',
       lineHeight: '1.65',
       color: '#374151',
-      backgroundColor: '#fefefe'
+      backgroundColor: '#fefefe',
+      accentColor: '#6b7280'
     },
     business: {
       fontFamily: 'sans-serif',
       fontSize: '16px',
       lineHeight: '1.6',
       color: '#1e293b',
-      backgroundColor: '#f1f5f9'
+      backgroundColor: '#f1f5f9',
+      accentColor: '#0ea5e9'
     },
     academic: {
       fontFamily: 'serif',
       fontSize: '14px',
       lineHeight: '1.75',
       color: '#111827',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#ffffff',
+      accentColor: '#059669'
     }
   };
   
-  return templates[templateId as keyof typeof templates] || templates.original;
+  const baseTemplate = templates[templateId as keyof typeof templates] || templates.original;
+  
+  // If custom theme is provided, use it; otherwise return base template
+  if (customTheme) {
+    return {
+      fontFamily: customTheme.fontFamily,
+      fontSize: customTheme.fontSize,
+      lineHeight: customTheme.lineHeight,
+      color: customTheme.textColor,
+      backgroundColor: customTheme.backgroundColor,
+      accentColor: customTheme.accentColor
+    };
+  }
+  
+  return baseTemplate;
 };
 
 // Generate HTML content
 function generateHTMLContent(bookData: BookData, options: ExportOptions = { includeCover: true, includeTableOfContents: true, includePageNumbers: true }): string {
-  const template = getTemplateStyles(bookData.selectedTemplate);
+  const template = getTemplateStyles(bookData.selectedTemplate, bookData.customTheme);
   
   let html = `
 <!DOCTYPE html>
@@ -464,7 +495,7 @@ async function generateHTMLForPDFConversion(bookData: BookData, options?: Export
 }
 
 function generatePrintableHTMLContent(bookData: BookData, options?: ExportOptions): string {
-  const template = getTemplateStyles(bookData.selectedTemplate);
+  const template = getTemplateStyles(bookData.selectedTemplate, bookData.customTheme);
   
   return `<!DOCTYPE html>
 <html lang="en">
@@ -780,7 +811,7 @@ export async function exportToEPUB(bookData: BookData, options?: ExportOptions):
   oebps?.file('content.opf', contentOpf);
 
   // Style.css
-  const template = getTemplateStyles(bookData.selectedTemplate);
+  const template = getTemplateStyles(bookData.selectedTemplate, bookData.customTheme);
   const css = `
 body {
   font-family: ${template.fontFamily};
