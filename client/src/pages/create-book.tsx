@@ -1693,23 +1693,6 @@ export default function CreateBook() {
               </p>
             </div>
 
-            {/* Interactive Flipbook Preview */}
-            <Card>
-              <CardContent className="p-8">
-                <h3 className="text-lg font-semibold mb-4">Interactive Flipbook Preview</h3>
-                <p className="text-muted-foreground mb-6">
-                  Preview your book in an interactive flipbook format. See how readers will experience your content with realistic page-turning effects.
-                </p>
-                
-                <Button 
-                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
-                  data-testid="button-open-flipbook"
-                >
-                  <BookOpen className="w-5 h-5 mr-2" />
-                  Open Flipbook Preview
-                </Button>
-              </CardContent>
-            </Card>
 
             {/* Manuscript Export */}
             <div>
@@ -1850,16 +1833,40 @@ export default function CreateBook() {
                     </p>
                     <Button 
                       className="bg-purple-600 hover:bg-purple-700 text-white"
-                      onClick={() => window.open(`/flipbook-preview?bookData=${encodeURIComponent(JSON.stringify({
-                        title: formData.title,
-                        subtitle: formData.subtitle,
-                        author: formData.author,
-                        description: formData.description,
-                        chapters: formData.chapters,
-                        selectedTemplate: formData.selectedTemplate,
-                        coverImageUrl: formData.coverImageUrl,
-                        language: formData.language
-                      }))}`, '_blank')}
+                      onClick={() => {
+                        if (!formData.chapters.length) {
+                          alert('Please add some chapters before previewing the flipbook.');
+                          return;
+                        }
+                        
+                        const flipbookData = {
+                          title: formData.title,
+                          subtitle: formData.subtitle,
+                          author: formData.author,
+                          description: formData.description,
+                          chapters: formData.chapters,
+                          selectedTemplate: formData.selectedTemplate,
+                          customTheme: formData.customTheme,
+                          coverImageUrl: formData.coverImageUrl,
+                          language: formData.language
+                        };
+                        
+                        // Create a temporary form to pass data without URL length limits
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = '/flipbook-preview';
+                        form.target = '_blank';
+                        
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'bookData';
+                        input.value = JSON.stringify(flipbookData);
+                        form.appendChild(input);
+                        
+                        document.body.appendChild(form);
+                        form.submit();
+                        document.body.removeChild(form);
+                      }}
                       data-testid="button-open-flipbook-preview"
                     >
                       <BookOpen className="w-4 h-4 mr-2" />

@@ -977,6 +977,19 @@ p {
 
   oebps?.file('toc.ncx', ncx);
 
+  // Download and add cover image if present
+  if (bookData.coverImageUrl) {
+    try {
+      const imageResponse = await fetch(bookData.coverImageUrl);
+      if (imageResponse.ok) {
+        const imageBuffer = await imageResponse.arrayBuffer();
+        oebps?.file('cover.jpg', imageBuffer);
+      }
+    } catch (error) {
+      console.warn('Failed to fetch cover image for EPUB:', error);
+    }
+  }
+
   // Generate ZIP
   const content = await zip.generateAsync({ type: 'nodebuffer' });
   await fs.writeFile(filePath, content);

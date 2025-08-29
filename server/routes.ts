@@ -495,6 +495,139 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Download exported files
+  // Flipbook preview route
+  app.post("/flipbook-preview", async (req, res) => {
+    try {
+      const bookData = JSON.parse(req.body.bookData);
+      
+      if (!bookData || !bookData.title || !bookData.chapters) {
+        return res.status(400).send('<h1>Error: Invalid book data</h1>');
+      }
+
+      // Generate HTML content for flipbook preview
+      const htmlContent = `
+<!DOCTYPE html>
+<html lang="${bookData.language || 'en'}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flipbook Preview - ${bookData.title}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .flipbook-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .flipbook-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .flipbook-title {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .flipbook-author {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        .flipbook-content {
+            padding: 40px;
+        }
+        .cover-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .cover-image {
+            max-width: 300px;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+        }
+        .chapter {
+            margin-bottom: 40px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #4facfe;
+        }
+        .chapter-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+        .chapter-content {
+            line-height: 1.7;
+            color: #4a5568;
+        }
+        .chapter-content p {
+            margin-bottom: 16px;
+        }
+        .flipbook-note {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: center;
+            color: #1565c0;
+        }
+    </style>
+</head>
+<body>
+    <div class="flipbook-container">
+        <div class="flipbook-header">
+            <h1 class="flipbook-title">${bookData.title}</h1>
+            ${bookData.subtitle ? `<p class="flipbook-subtitle">${bookData.subtitle}</p>` : ''}
+            <p class="flipbook-author">by ${bookData.author}</p>
+        </div>
+        
+        <div class="flipbook-content">
+            <div class="flipbook-note">
+                📖 Interactive Flipbook Preview - This shows how your book will look to readers
+            </div>
+            
+            ${bookData.coverImageUrl ? `
+            <div class="cover-section">
+                <img src="${bookData.coverImageUrl}" alt="Book Cover" class="cover-image">
+                <p><strong>Description:</strong> ${bookData.description}</p>
+            </div>
+            ` : ''}
+            
+            ${bookData.chapters.map((chapter, index) => `
+                <div class="chapter">
+                    <h2 class="chapter-title">Chapter ${index + 1}: ${chapter.title}</h2>
+                    <div class="chapter-content">
+                        ${chapter.content ? chapter.content.split('\\n\\n').map(p => `<p>${p.trim()}</p>`).join('') : '<p><em>Chapter content will appear here...</em></p>'}
+                    </div>
+                </div>
+            `).join('')}
+        </div>
+    </div>
+</body>
+</html>`;
+
+      res.send(htmlContent);
+    } catch (error) {
+      console.error('Flipbook preview error:', error);
+      res.status(500).send('<h1>Error: Failed to generate flipbook preview</h1>');
+    }
+  });
+
   app.get("/api/download/:fileName", async (req, res) => {
     try {
       const { fileName } = req.params;
