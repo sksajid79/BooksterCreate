@@ -45,16 +45,17 @@ function removeDuplicateChapterTitle(content: string, chapterTitle: string): str
   const cleanTitle = chapterTitle.trim();
   let cleanedContent = content;
   
-  // Split by both single and double newlines to catch different patterns
+  // Split content into lines for processing
   const lines = cleanedContent.split('\n');
   if (lines.length === 0) return content;
   
-  let startIndex = 0;
+  let linesToRemove = [];
   
-  // Check the first few lines for duplicate titles
-  for (let i = 0; i < Math.min(3, lines.length); i++) {
+  // Check the first several lines for duplicate titles
+  for (let i = 0; i < Math.min(5, lines.length); i++) {
     const line = lines[i].trim();
     
+    // Check for exact matches or markdown-style matches
     if (line === cleanTitle || 
         line === `# ${cleanTitle}` ||
         line === `## ${cleanTitle}` ||
@@ -62,17 +63,23 @@ function removeDuplicateChapterTitle(content: string, chapterTitle: string): str
         line === `#### ${cleanTitle}` ||
         line === `##### ${cleanTitle}` ||
         line === `###### ${cleanTitle}`) {
-      startIndex = i + 1;
-      // Skip any empty lines immediately after the duplicate title
-      while (startIndex < lines.length && lines[startIndex].trim() === '') {
-        startIndex++;
-      }
+      linesToRemove.push(i);
+    }
+    
+    // Also check if the line is empty (we'll remove empty lines after duplicate titles)
+    if (linesToRemove.length > 0 && line === '') {
+      linesToRemove.push(i);
+    } else if (linesToRemove.length > 0 && line !== '') {
+      // Stop removing empty lines once we hit content
+      break;
     }
   }
   
-  // If we found duplicates to remove, reconstruct content
-  if (startIndex > 0) {
-    cleanedContent = lines.slice(startIndex).join('\n').trim();
+  // Remove the identified lines
+  if (linesToRemove.length > 0) {
+    // Create a new array without the duplicate lines
+    const filteredLines = lines.filter((_, index) => !linesToRemove.includes(index));
+    cleanedContent = filteredLines.join('\n').trim();
   }
   
   return cleanedContent;
