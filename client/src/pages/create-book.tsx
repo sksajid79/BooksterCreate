@@ -151,7 +151,7 @@ export default function CreateBook() {
           stepName,
           stepData,
           isCompleted: true,
-          completedAt: new Date().toISOString()
+          completedAt: new Date()
         }),
         headers,
       });

@@ -107,14 +107,31 @@ Make sure the content is professional, engaging, and provides real value to the 
     });
 
     const content = response.content[0].type === 'text' ? response.content[0].text : '';
+    console.log('AI Response content:', content);
     
-    // Extract JSON from response
-    const jsonMatch = content.match(/\[[\s\S]*\]/);
+    // Extract JSON from response - try multiple patterns
+    let jsonMatch = content.match(/\[[\s\S]*\]/);
     if (!jsonMatch) {
-      throw new Error('Could not parse chapter data from AI response');
+      // Try to find JSON with curly braces around it
+      jsonMatch = content.match(/```json\n?([\s\S]*?)\n?```/);
+      if (jsonMatch) {
+        jsonMatch[0] = jsonMatch[1];
+      }
+    }
+    
+    if (!jsonMatch) {
+      console.error('Could not find JSON in AI response:', content);
+      throw new Error('Could not parse chapter data from AI response - no JSON found');
     }
 
-    const chapters = JSON.parse(jsonMatch[0]);
+    let chapters;
+    try {
+      chapters = JSON.parse(jsonMatch[0]);
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError);
+      console.error('Attempted to parse:', jsonMatch[0]);
+      throw new Error('Could not parse chapter data from AI response - invalid JSON');
+    }
     
     // Add isExpanded property and ensure proper structure
     return chapters.map((chapter: any, index: number) => ({
