@@ -13,7 +13,7 @@ import path from "path";
 function getDefaultPrompts() {
   return {
     book_outline: {
-      prompt: `You are a world-class e-book author and content strategist. Create a comprehensive chapter structure for a {numberOfChapters}-chapter e-book that will become the definitive guide for {targetAudience}.
+      prompt: `You are a world-renowned e-book strategist who has created 1000+ bestselling books. Create a masterful chapter structure for "{title}" - a comprehensive {numberOfChapters}-chapter guide that will become the definitive resource for {targetAudience}.
 
 ## BOOK SPECIFICATIONS
 **Title:** {title}
@@ -22,140 +22,204 @@ function getDefaultPrompts() {
 **Tone & Style:** {toneStyle}
 **Core Mission:** {mission}
 
-## OUTLINE REQUIREMENTS
+## STRATEGIC OUTLINE REQUIREMENTS
 
-### CHAPTER STRUCTURE ONLY
-Your task is to create ONLY the chapter outline with compelling titles. Do NOT generate any chapter content - that will be created individually later.
+### CHAPTER STRUCTURE METHODOLOGY
+Your task: Create ONLY compelling chapter titles that form a complete learning journey. Do NOT generate content - that comes later.
 
-### CHAPTER TITLE GUIDELINES
-- Create {numberOfChapters} powerful, benefit-focused chapter titles
-- Each title should be specific and intriguing to {targetAudience}
-- Titles should flow logically from beginner to advanced concepts
-- Use {toneStyle} language that resonates with {targetAudience}
-- Ensure progressive learning from chapter to chapter
-- Focus on transformation and practical outcomes
+### ADVANCED TITLE GUIDELINES
+**Audience Psychology:**
+- Address specific pain points and desires of {targetAudience}
+- Use benefit-driven language that creates urgency and curiosity
+- Include power words that resonate with their goals and challenges
+- Promise specific, measurable outcomes
 
-### LOGICAL PROGRESSION
-Structure the chapters to follow a natural learning path:
-1. **Foundation chapters** - Core concepts and understanding
-2. **Implementation chapters** - Practical strategies and methods  
-3. **Advanced chapters** - Optimization and mastery
-4. **Integration chapters** - Bringing it all together
+**Progressive Structure:**
+- **Chapters 1-2:** Foundation & Problem Awareness ("Why this matters now")
+- **Chapters 3-4:** Core Methods & Frameworks ("How to do it right")
+- **Chapters 5-6:** Advanced Implementation ("Optimizing for results") 
+- **Chapters 7+:** Mastery & Integration ("Sustaining long-term success")
+
+**Title Formula:** [Specific Benefit] + [For Audience] + [Clear Outcome]
+Example: "The 5-Minute Morning Routine That Doubles Productivity for Busy Entrepreneurs"
+
+### EXPERT-LEVEL REQUIREMENTS
+- Each title must solve a specific problem or deliver a specific benefit
+- Use numbers, timeframes, or specific outcomes when relevant
+- Create curiosity gaps that compel reading
+- Ensure each chapter builds naturally to the next
+- Address the complete journey from beginner to expert
 
 ## JSON OUTPUT FORMAT
-Return ONLY a valid JSON array with chapter titles and empty content placeholders:
+Return ONLY a valid JSON array with compelling titles and empty content:
 
 [
   {
     "id": "1",
-    "title": "Compelling Chapter Title That Hooks the Reader",
+    "title": "The Hidden Cost of [Problem]: Why {targetAudience} Struggle and How to Break Free",
     "content": ""
   },
   {
-    "id": "2", 
-    "title": "Building Upon the Foundation",
+    "id": "2",
+    "title": "The [Framework Name]: A Proven System That Gets [Specific Results] in [Timeframe]",
     "content": ""
   }
 ]
 
-## CRITICAL INSTRUCTIONS
+## CRITICAL SUCCESS FACTORS
 - Generate ONLY chapter titles - leave all "content" fields empty ("")
-- Create titles that are specific, benefit-focused, and compelling
-- Ensure logical flow from basic to advanced concepts
-- Make each title irresistible to {targetAudience}
-- Return ONLY the JSON array - no explanations, no markdown code blocks
-- Each chapter title should promise clear value and transformation`
+- Each title must be irresistible to {targetAudience}
+- Create a logical, compelling progression that builds mastery
+- Use psychological triggers: curiosity, urgency, specificity, benefit
+- Return ONLY the JSON array - no explanations or formatting
+- Ensure titles work as a cohesive system, not standalone pieces`
     },
     chapter_generation: {
-      prompt: `You are a world-renowned expert author specializing in {targetAudience} success strategies. You're writing the definitive chapter on "{chapterTitle}" for the book "{title}". This chapter must be exceptional - the kind of content that readers will highlight, share, and return to repeatedly.
+      prompt: `You are the world's leading expert on {targetAudience} transformation and the #1 bestselling author in this field. You're crafting Chapter: "{chapterTitle}" for "{title}" - this single chapter must be so valuable that readers would pay for the entire book just for this content.
 
-## BOOK CONTEXT
-**Title:** {title}
-**Target Audience:** {targetAudience}
-**Book Description:** {description}
+## STRATEGIC CONTEXT
+**Book Title:** {title}
+**Target Audience:** {targetAudience}  
+**Book Mission:** {mission}
+**Description:** {description}
 **Tone & Style:** {toneStyle}
-**Core Mission:** {mission}
+**Chapter Focus:** {chapterTitle}
 
-## CHAPTER MISSION
-Create a comprehensive, transformational chapter titled "{chapterTitle}" that becomes the go-to resource for {targetAudience} on this specific topic.
+## CHAPTER ARCHITECTURE (3000-4000 words)
 
-## CONTENT SPECIFICATIONS (2500-3500 words)
+### HOOK MASTERY (Opening 400 words)
+**Attention Grabber Options (Choose Most Powerful):**
+- Shocking statistic that challenges conventional thinking
+- Personal transformation story that mirrors reader's journey
+- Costly mistake that 90% of {targetAudience} make
+- Contrarian insight that flips industry assumptions
+- "What if I told you..." revelation that changes everything
 
-### OPENING SECTION (300-400 words)
-- **Powerful Hook:** Start with a compelling story, surprising statistic, thought-provoking question, or bold statement
-- **Problem Recognition:** Help readers identify why this topic matters to them personally
-- **Promise:** Clearly state what they'll achieve by reading this chapter
-- **Roadmap:** Brief overview of what's coming
+**Essential Opening Elements:**
+- **Problem Agitation:** Make the pain of NOT knowing this content unbearable
+- **Credibility Markers:** Subtle authority indicators without bragging  
+- **Outcome Promise:** Specific, measurable transformation they'll achieve
+- **Curiosity Gap:** Teaser of surprising insights coming
 
-### MAIN CONTENT STRUCTURE
+### FOUNDATIONAL MASTERY (Section 1: 800-1000 words)
+**## [Power Title That Promises Insight]**
 
-#### Section 1: Foundation & Context (600-800 words)
-- **## [Descriptive Heading]**
-- Deep dive into the fundamental concepts
-- Why traditional approaches often fail
-- What makes this approach different
-- Research or evidence backing your approach
+**Core Requirements:**
+- Destroy 2-3 common myths or misconceptions in your field
+- Present the "uncomfortable truth" most experts won't share
+- Introduce your unique framework with a memorable name
+- Use the "Before vs After" transformation structure
+- Include at least one "lightbulb moment" insight
 
-#### Section 2: Core Strategy/Framework (800-1000 words)
-- **## [Action-Oriented Heading]**
-- Your primary methodology or system
-- **### Step-by-step breakdown** with specific, actionable instructions
-- **### Tools and resources** needed for implementation
-- **### Real-world application examples** relevant to {targetAudience}
+**Authority Builders:**
+- Reference specific research, studies, or data points
+- Share insider knowledge from your experience
+- Mention case studies or client examples (anonymized)
+- Address why traditional methods fail
 
-#### Section 3: Advanced Implementation (600-800 words)
-- **## [Results-Focused Heading]**
-- Advanced techniques for maximizing results
-- **### Common obstacles** and how to overcome them
-- **### Troubleshooting guide** for typical challenges
-- **### Success accelerators** and optimization strategies
+### IMPLEMENTATION MASTERY (Section 2: 1000-1200 words)
+**## [Action-Oriented Title Promising Results]**
 
-#### Section 4: Practical Application (400-500 words)
-- **## Putting It Into Action**
-- **### Immediate next steps** (what to do today)
-- **### 30-day implementation plan**
-- **### Long-term mastery roadmap**
-- **### Measuring progress and success**
+**The Core System/Framework:**
+- Present your methodology as a named system or framework
+- Break down into 3-7 clear, sequential steps
+- Each step must have specific actions, not just concepts
+- Include decision trees or "if this, then that" guidance
 
-### CLOSING SECTION (200-300 words)
-- **## Key Takeaways and Next Steps**
-- Powerful summary of core insights
-- Motivational closing that inspires action
-- Smooth transition to next chapter concepts
+**### Step 1: [Specific Action Title]**
+- What exactly to do (specific actions)
+- How to do it (detailed process)
+- When to do it (timing/sequence)
+- Why it works (brief explanation)
+- Common mistakes to avoid
 
-## QUALITY REQUIREMENTS
+**### Step 2-N: [Follow Same Pattern]**
+
+**Real-World Application:**
+- 2-3 detailed case studies or examples
+- Tools, templates, or resources needed
+- Troubleshooting guide for common issues
+- Success metrics and what to measure
+
+### OPTIMIZATION MASTERY (Section 3: 800-1000 words) 
+**## [Results-Focused Title About Maximizing Outcomes]**
+
+**Advanced Strategies:**
+- "Power moves" that 10x results
+- Shortcuts that save time without sacrificing quality
+- Psychological principles that amplify effectiveness
+- Systems for continuous improvement
+
+**### Obstacle Navigation**
+- Top 5 challenges {targetAudience} face with this topic
+- Specific solutions for each obstacle
+- Warning signs to watch for
+- Recovery strategies when things go wrong
+
+**### Acceleration Techniques**
+- Advanced tips for experienced practitioners
+- Combination strategies that stack benefits
+- Timing optimizations and seasonal considerations
+- Technology or tools that amplify results
+
+### ACTION MASTERY (Final Section: 400-600 words)
+**## Your Next 30 Days: From Knowledge to Results**
+
+**Implementation Roadmap:**
+- **Days 1-7:** Initial setup and foundation building
+- **Days 8-14:** Core implementation and first results
+- **Days 15-21:** Optimization and troubleshooting 
+- **Days 22-30:** Advanced techniques and mastery habits
+
+**Success Tracking:**
+- Specific metrics to measure progress
+- Milestone celebrations and momentum builders
+- When to adjust strategy based on results
+- How to maintain long-term consistency
+
+## WORLD-CLASS WRITING STANDARDS
 
 ### Content Excellence
-- **Authority:** Demonstrate deep expertise and insider knowledge
-- **Practicality:** Every concept must include specific, actionable steps
-- **Engagement:** Use storytelling, analogies, and relatable examples throughout
-- **Value Density:** Pack maximum insights per paragraph
-- **Originality:** Provide fresh perspectives and unique frameworks
+- **Unique Value:** Information available nowhere else
+- **Immediate Application:** Readers can use this today
+- **Transformation Focus:** Clear before/after outcomes
+- **Authority Positioning:** Demonstrate deep expertise naturally
+- **Engagement Mastery:** Stories, analogies, and relatable examples throughout
 
-### Writing Standards
-- **Tone:** Maintain consistent {toneStyle} that resonates with {targetAudience}
-- **Clarity:** Use clear, concise language while maintaining sophistication
-- **Flow:** Ensure smooth transitions between sections and concepts
-- **Formatting:** Extensive use of markdown (##, ###, **, bullet points, numbered lists)
-- **Engagement:** Vary sentence length and structure for readability
+### Advanced Writing Techniques
+- **Psychological Triggers:** Use curiosity, urgency, and social proof
+- **Conversational Authority:** {toneStyle} that builds trust and connection
+- **Visual Content:** Use formatting to enhance readability and comprehension
+- **Transition Mastery:** Smooth bridges between all sections and ideas
+- **Retention Enhancers:** Summaries, key points, and memorable frameworks
 
-### Essential Elements to Include
-- At least 2-3 real-world examples or mini case studies
-- Specific tools, templates, or frameworks
-- Actionable checklists or step-by-step processes
-- Common mistakes and prevention strategies
-- Industry insights or "insider secrets"
-- Future-thinking perspectives on the topic
+### Essential Content Elements
+- 3+ real-world case studies or detailed examples
+- Named framework, system, or methodology
+- Specific tools, templates, or resource recommendations  
+- Step-by-step process for immediate implementation
+- Troubleshooting guide and common mistake prevention
+- Advanced strategies for experienced practitioners
+- Clear success metrics and progress tracking
+- 30-day implementation roadmap
 
-## CRITICAL FORMATTING INSTRUCTIONS
-- Start immediately with content (no JSON, no explanations)
-- Use ## for main sections, ### for subsections
-- Bold important concepts with **text**
-- Use bullet points (-) and numbered lists (1.) generously
-- Include practical elements like checklists and action items
-- End with clear, specific next steps
+## FORMATTING EXCELLENCE
+- Start immediately with compelling content (no introductions or explanations)
+- Use ## for major sections, ### for subsections and steps
+- Bold key concepts, frameworks, and important points
+- Bullet points for lists, numbered steps for processes
+- Include actionable checklists and implementation guides
+- End with specific next steps that create momentum
 
-Create content that positions you as the definitive expert on "{chapterTitle}" while delivering massive value to {targetAudience}. This chapter should be so good that readers consider it worth the price of the entire book.`
+## SUCCESS CRITERIA
+This chapter should be so valuable that readers:
+1. Immediately bookmark it for future reference
+2. Share quotes and insights with others
+3. Consider it worth the price of the entire book
+4. Experience measurable results within 30 days
+5. View you as the definitive expert on this topic
+
+Create transformational content that establishes ultimate authority while delivering unprecedented value to {targetAudience}.`
     }
   };
 }
@@ -621,7 +685,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { chapterTitle, bookDetails } = req.body;
+      const { chapterTitle, bookDetails, allChapterTitles, chapterIndex } = req.body;
       
       if (!chapterTitle || !bookDetails) {
         return res.status(400).json({ 
@@ -629,7 +693,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const content = await regenerateChapter(chapterTitle, bookDetails);
+      const content = await regenerateChapter(chapterTitle, bookDetails, allChapterTitles, chapterIndex);
       
       // Deduct credit after successful regeneration (unless admin)
       if (req.user.role !== "admin") {

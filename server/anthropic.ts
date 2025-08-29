@@ -64,7 +64,7 @@ interface Chapter {
 export async function generateChapters(bookDetails: BookDetails): Promise<Chapter[]> {
   try {
     // Get the book outline prompt from database
-    const fallbackPrompt = `You are a world-class e-book author and content strategist. Create a comprehensive chapter structure for a {numberOfChapters}-chapter e-book that will become the definitive guide for {targetAudience}.
+    const fallbackPrompt = `You are a world-renowned e-book strategist who has created 1000+ bestselling books. Create a masterful chapter structure for "{title}" - a comprehensive {numberOfChapters}-chapter guide that will become the definitive resource for {targetAudience}.
 
 ## BOOK SPECIFICATIONS
 **Title:** {title}
@@ -73,40 +73,57 @@ export async function generateChapters(bookDetails: BookDetails): Promise<Chapte
 **Tone & Style:** {toneStyle}
 **Core Mission:** {mission}
 
-## OUTLINE REQUIREMENTS
+## STRATEGIC OUTLINE REQUIREMENTS
 
-### CHAPTER STRUCTURE ONLY
-Your task is to create ONLY the chapter outline with compelling titles. Do NOT generate any chapter content - that will be created individually later.
+### CHAPTER STRUCTURE METHODOLOGY
+Your task: Create ONLY compelling chapter titles that form a complete learning journey. Do NOT generate content - that comes later.
 
-### CHAPTER TITLE GUIDELINES
-- Create {numberOfChapters} powerful, benefit-focused chapter titles
-- Each title should be specific and intriguing to {targetAudience}
-- Titles should flow logically from beginner to advanced concepts
-- Use {toneStyle} language that resonates with {targetAudience}
-- Ensure progressive learning from chapter to chapter
-- Focus on transformation and practical outcomes
+### ADVANCED TITLE GUIDELINES
+**Audience Psychology:**
+- Address specific pain points and desires of {targetAudience}
+- Use benefit-driven language that creates urgency and curiosity
+- Include power words that resonate with their goals and challenges
+- Promise specific, measurable outcomes
+
+**Progressive Structure:**
+- **Chapters 1-2:** Foundation & Problem Awareness ("Why this matters now")
+- **Chapters 3-4:** Core Methods & Frameworks ("How to do it right")
+- **Chapters 5-6:** Advanced Implementation ("Optimizing for results") 
+- **Chapters 7+:** Mastery & Integration ("Sustaining long-term success")
+
+**Title Formula:** [Specific Benefit] + [For Audience] + [Clear Outcome]
+Example: "The 5-Minute Morning Routine That Doubles Productivity for Busy Entrepreneurs"
+
+### EXPERT-LEVEL REQUIREMENTS
+- Each title must solve a specific problem or deliver a specific benefit
+- Use numbers, timeframes, or specific outcomes when relevant
+- Create curiosity gaps that compel reading
+- Ensure each chapter builds naturally to the next
+- Address the complete journey from beginner to expert
 
 ## JSON OUTPUT FORMAT
-Return ONLY a valid JSON array with chapter titles and empty content placeholders:
+Return ONLY a valid JSON array with compelling titles and empty content:
 
 [
   {
     "id": "1",
-    "title": "Compelling Chapter Title That Hooks the Reader",
+    "title": "The Hidden Cost of [Problem]: Why {targetAudience} Struggle and How to Break Free",
     "content": ""
   },
   {
-    "id": "2", 
-    "title": "Building Upon the Foundation",
+    "id": "2",
+    "title": "The [Framework Name]: A Proven System That Gets [Specific Results] in [Timeframe]",
     "content": ""
   }
 ]
 
-## CRITICAL INSTRUCTIONS
+## CRITICAL SUCCESS FACTORS
 - Generate ONLY chapter titles - leave all "content" fields empty ("")
-- Create titles that are specific, benefit-focused, and compelling
-- Return ONLY the JSON array - no explanations, no markdown code blocks
-- Each chapter title should promise clear value and transformation`;
+- Each title must be irresistible to {targetAudience}
+- Create a logical, compelling progression that builds mastery
+- Use psychological triggers: curiosity, urgency, specificity, benefit
+- Return ONLY the JSON array - no explanations or formatting
+- Ensure titles work as a cohesive system, not standalone pieces`;
 
     const promptTemplate = await getPromptFromDb('book_outline', fallbackPrompt);
     
@@ -123,7 +140,8 @@ Return ONLY a valid JSON array with chapter titles and empty content placeholder
 
     const response = await anthropic.messages.create({
       model: DEFAULT_MODEL_STR, // "claude-sonnet-4-20250514"
-      max_tokens: 4000,
+      max_tokens: 6000, // Increased for better outline generation
+      temperature: 0.7, // Optimal creativity for titles
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -248,25 +266,107 @@ Return ONLY a valid JSON array with chapter titles and empty content placeholder
   }
 }
 
-export async function regenerateChapter(chapterTitle: string, bookDetails: BookDetails): Promise<string> {
+export async function regenerateChapter(
+  chapterTitle: string, 
+  bookDetails: BookDetails,
+  allChapterTitles?: string[],
+  chapterIndex?: number
+): Promise<string> {
   try {
-    // Get the chapter generation prompt from database
-    const fallbackPrompt = `You are a professional author. Regenerate content for a chapter titled "{chapterTitle}" for an e-book about "{title}".
+    // Get the enhanced chapter generation prompt from database
+    const fallbackPrompt = `You are the world's leading expert on {targetAudience} transformation and the #1 bestselling author in this field. You're crafting Chapter: "{chapterTitle}" for "{title}" - this single chapter must be so valuable that readers would pay for the entire book just for this content.
 
-Book context:
-- Target Audience: {targetAudience}
-- Tone & Style: {toneStyle}
-- Mission: {mission}
+## STRATEGIC CONTEXT
+**Book Title:** {title}
+**Target Audience:** {targetAudience}  
+**Book Mission:** {mission}
+**Description:** {description}
+**Tone & Style:** {toneStyle}
+**Chapter Focus:** {chapterTitle}
+{bookContext}
 
-Create engaging, practical content for this chapter that includes:
-- Real-world examples and scenarios
-- Actionable strategies and tips
-- Professional insights relevant to the topic
-- Content that matches the specified tone and audience
+## CHAPTER ARCHITECTURE (3000-4000 words)
 
-Provide 3-4 well-structured paragraphs with subheadings where appropriate.`;
+### HOOK MASTERY (Opening 400 words)
+**Attention Grabber Options (Choose Most Powerful):**
+- Shocking statistic that challenges conventional thinking
+- Personal transformation story that mirrors reader's journey
+- Costly mistake that 90% of {targetAudience} make
+- Contrarian insight that flips industry assumptions
+- "What if I told you..." revelation that changes everything
+
+**Essential Opening Elements:**
+- **Problem Agitation:** Make the pain of NOT knowing this content unbearable
+- **Credibility Markers:** Subtle authority indicators without bragging  
+- **Outcome Promise:** Specific, measurable transformation they'll achieve
+- **Curiosity Gap:** Teaser of surprising insights coming
+
+### FOUNDATIONAL MASTERY (Section 1: 800-1000 words)
+**## [Power Title That Promises Insight]**
+
+**Core Requirements:**
+- Destroy 2-3 common myths or misconceptions in your field
+- Present the "uncomfortable truth" most experts won't share
+- Introduce your unique framework with a memorable name
+- Use the "Before vs After" transformation structure
+- Include at least one "lightbulb moment" insight
+
+### IMPLEMENTATION MASTERY (Section 2: 1000-1200 words)
+**## [Action-Oriented Title Promising Results]**
+
+**The Core System/Framework:**
+- Present your methodology as a named system or framework
+- Break down into 3-7 clear, sequential steps
+- Each step must have specific actions, not just concepts
+- Include decision trees or "if this, then that" guidance
+
+### OPTIMIZATION MASTERY (Section 3: 800-1000 words) 
+**## [Results-Focused Title About Maximizing Outcomes]**
+
+**Advanced Strategies:**
+- "Power moves" that 10x results
+- Shortcuts that save time without sacrificing quality
+- Psychological principles that amplify effectiveness
+- Systems for continuous improvement
+
+### ACTION MASTERY (Final Section: 400-600 words)
+**## Your Next 30 Days: From Knowledge to Results**
+
+**Implementation Roadmap:**
+- **Days 1-7:** Initial setup and foundation building
+- **Days 8-14:** Core implementation and first results
+- **Days 15-21:** Optimization and troubleshooting 
+- **Days 22-30:** Advanced techniques and mastery habits
+
+## FORMATTING EXCELLENCE
+- Start immediately with compelling content (no introductions or explanations)
+- Use ## for major sections, ### for subsections and steps
+- Bold key concepts, frameworks, and important points
+- Bullet points for lists, numbered steps for processes
+- Include actionable checklists and implementation guides
+- End with specific next steps that create momentum
+
+Create transformational content that establishes ultimate authority while delivering unprecedented value to {targetAudience}.`;
 
     const promptTemplate = await getPromptFromDb('chapter_generation', fallbackPrompt);
+    
+    // Build enhanced context awareness for progressive building
+    let bookContext = '';
+    if (allChapterTitles && chapterIndex !== undefined) {
+      const previousChapters = allChapterTitles.slice(0, chapterIndex).join(', ');
+      const nextChapters = allChapterTitles.slice(chapterIndex + 1, chapterIndex + 3).join(', ');
+      
+      bookContext = `\n**Chapter Context:**\n`;
+      if (previousChapters) {
+        bookContext += `**Previous Chapters:** ${previousChapters}\n`;
+        bookContext += `**Build Upon:** Reference concepts from previous chapters where relevant\n`;
+      }
+      if (nextChapters) {
+        bookContext += `**Upcoming Chapters:** ${nextChapters}\n`;
+        bookContext += `**Set Foundation:** Prepare readers for upcoming advanced concepts\n`;
+      }
+      bookContext += `**Chapter Position:** ${chapterIndex + 1} of ${allChapterTitles.length}\n`;
+    }
     
     const prompt = replacePromptVariables(promptTemplate, {
       title: bookDetails.title,
@@ -274,13 +374,14 @@ Provide 3-4 well-structured paragraphs with subheadings where appropriate.`;
       description: bookDetails.description,
       toneStyle: bookDetails.toneStyle,
       mission: bookDetails.mission,
-      chapterNumber: '', // Not needed for regeneration
-      chapterTitle: chapterTitle
+      chapterTitle: chapterTitle,
+      bookContext: bookContext
     });
 
     const response = await anthropic.messages.create({
       model: DEFAULT_MODEL_STR, // "claude-sonnet-4-20250514"
-      max_tokens: 2000,
+      max_tokens: 8000, // Increased for comprehensive chapters
+      temperature: 0.8, // Higher creativity for engaging content
       messages: [{ role: 'user', content: prompt }],
     });
 
@@ -293,39 +394,22 @@ Provide 3-4 well-structured paragraphs with subheadings where appropriate.`;
     if (error instanceof Error && error.message.includes('credit balance is too low')) {
       console.log('API credits exhausted, returning demo chapter content for testing');
       
-      return `## Demo: ${chapterTitle}
+      return `## ${chapterTitle}
 
-This is demonstration content for the chapter "${chapterTitle}" that showcases proper formatting. In a real scenario, this would be fully customized AI-generated content.
+**[Demo Content Notice: API Credits Exhausted]**
 
-## Understanding the Topic
+This chapter would contain comprehensive, professional content specifically crafted for ${bookDetails.targetAudience} with a ${bookDetails.toneStyle} tone, focused on ${bookDetails.mission}.
 
-When addressing ${bookDetails.targetAudience}, it's important to consider their specific needs and challenges. This chapter would focus on practical solutions with a ${bookDetails.toneStyle} approach.
+### What This Chapter Would Cover:
+- Advanced strategies and frameworks for ${chapterTitle.toLowerCase()}
+- Real-world implementation examples
+- Step-by-step action plans
+- Common obstacles and solutions
+- 30-day implementation roadmap
 
-### Key Concepts
+**To generate full content:** Add API credits to your account and regenerate this chapter.
 
-- **Targeted Approach**: Content specifically designed for ${bookDetails.targetAudience}
-- **Practical Implementation**: Real-world applications and examples
-- **Clear Guidance**: Step-by-step instructions and actionable advice
-
-## Main Content Section
-
-This section would contain comprehensive information about ${chapterTitle}, tailored to support your book's mission: ${bookDetails.mission}
-
-### Implementation Strategies
-
-Here you would find detailed strategies and techniques that readers can immediately apply to their situation.
-
-### Real-World Examples
-
-Practical examples and case studies would be included to illustrate the concepts discussed.
-
-## Chapter Summary
-
-- Key insight 1: Understanding the specific needs of ${bookDetails.targetAudience}
-- Key insight 2: Practical application of concepts related to ${chapterTitle}
-- Key insight 3: Moving forward with confidence and clear direction
-
-*Note: This is demo content. With proper API credits, this chapter would be fully customized based on your book's specific requirements and the chapter title.*`;
+*This is placeholder content. Full AI-generated chapters are available with proper API credits.*`;
     }
     
     throw new Error('Failed to regenerating chapter. Please try again.');
