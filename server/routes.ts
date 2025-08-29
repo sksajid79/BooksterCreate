@@ -4,6 +4,7 @@ import { storage } from "./storage";
 import { generateChapters, regenerateChapter } from "./anthropic.js";
 import { exportToPDF, exportToHTML, exportToMarkdown, exportToEPUB, exportToDOCX } from "./exportGenerator.js";
 import { insertBookSchema, insertChapterSchema, insertBookProgressSchema, loginSchema, signupSchema, Chapter } from "@shared/schema";
+import { z } from "zod";
 import { authenticateToken, requireAdmin, requireCredits, generateToken, type AuthRequest } from "./auth";
 import { db, testDatabaseConnection } from "./db";
 import { users } from "@shared/schema";
@@ -239,6 +240,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin user update error:", error);
       res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  app.post("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const { username, email, password, role = "free", credits = 1 } = signupSchema.extend({
+        role: z.string().optional(),
+        credits: z.number().optional(),
+      }).parse(req.body);
+      
+      // Check if user already exists
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+      
+      const existingUserByUsername = await storage.getUserByUsername(username);
+      if (existingUserByUsername) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+      
+      // Create new user
+      const user = await storage.createUser({
+        username,
+        email,
+        password,
+        role,
+        credits,
+      });
+      
+      // Don't send password back
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.status(201).json(userWithoutPassword);
+    } catch (error) {
+      console.error("Admin user creation error:", error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to create user",
+      });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      
+      // Prevent admin from deleting themselves
+      if (req.user?.id === id) {
+        return res.status(400).json({ error: "Cannot delete your own account" });
+      }
+      
+      // Check if user exists
+      const user = await storage.getUser(id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Delete the user
+      const deleted = await storage.deleteUser(id);
+      if (!deleted) {
+        return res.status(500).json({ error: "Failed to delete user" });
+      }
+      
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Admin user deletion error:", error);
+      res.status(500).json({ error: "Failed to delete user" });
     }
   });
 
