@@ -64,28 +64,49 @@ interface Chapter {
 export async function generateChapters(bookDetails: BookDetails): Promise<Chapter[]> {
   try {
     // Get the book outline prompt from database
-    const fallbackPrompt = `You are a professional author and content creator. Create a comprehensive outline and content for an e-book with the following details:
+    const fallbackPrompt = `You are a world-class e-book author and content strategist. Create a comprehensive chapter structure for a {numberOfChapters}-chapter e-book that will become the definitive guide for {targetAudience}.
 
-Book Title: {title}
-Subtitle: {subtitle}
-Description: {description}
-Target Audience: {targetAudience}
-Tone & Style: {toneStyle}
-Mission: {mission}
-Author: {author}
+## BOOK SPECIFICATIONS
+**Title:** {title}
+**Target Audience:** {targetAudience}
+**Description:** {description}
+**Tone & Style:** {toneStyle}
+**Core Mission:** {mission}
 
-Please generate {numberOfChapters} chapters for this e-book. For each chapter, provide:
-1. A compelling chapter title
-2. Detailed content (2-3 paragraphs minimum per chapter)
-3. Include practical advice, real-world examples, and actionable strategies
-4. Maintain consistency with the specified tone and target audience
+## OUTLINE REQUIREMENTS
 
-Format your response as a JSON array where each chapter has:
-- id: string (numbered 1, 2, 3, etc.)
-- title: string (the chapter title)
-- content: string (the full chapter content with proper formatting)
+### CHAPTER STRUCTURE ONLY
+Your task is to create ONLY the chapter outline with compelling titles. Do NOT generate any chapter content - that will be created individually later.
 
-Make sure the content is professional, engaging, and provides real value to the target audience.`;
+### CHAPTER TITLE GUIDELINES
+- Create {numberOfChapters} powerful, benefit-focused chapter titles
+- Each title should be specific and intriguing to {targetAudience}
+- Titles should flow logically from beginner to advanced concepts
+- Use {toneStyle} language that resonates with {targetAudience}
+- Ensure progressive learning from chapter to chapter
+- Focus on transformation and practical outcomes
+
+## JSON OUTPUT FORMAT
+Return ONLY a valid JSON array with chapter titles and empty content placeholders:
+
+[
+  {
+    "id": "1",
+    "title": "Compelling Chapter Title That Hooks the Reader",
+    "content": ""
+  },
+  {
+    "id": "2", 
+    "title": "Building Upon the Foundation",
+    "content": ""
+  }
+]
+
+## CRITICAL INSTRUCTIONS
+- Generate ONLY chapter titles - leave all "content" fields empty ("")
+- Create titles that are specific, benefit-focused, and compelling
+- Return ONLY the JSON array - no explanations, no markdown code blocks
+- Each chapter title should promise clear value and transformation`;
 
     const promptTemplate = await getPromptFromDb('book_outline', fallbackPrompt);
     
@@ -182,7 +203,7 @@ Make sure the content is professional, engaging, and provides real value to the 
             return {
               id: (index + 1).toString(),
               title: title,
-              content: `This comprehensive chapter covers ${title}. The content will be tailored to ${bookDetails.targetAudience} with a ${bookDetails.toneStyle} tone, focusing on ${bookDetails.mission}.`
+              content: ""
             };
           });
         chapters = extractedChapters;
@@ -215,47 +236,7 @@ Make sure the content is professional, engaging, and provides real value to the 
         demoChapters.push({
           id: i.toString(),
           title: `Demo Chapter ${i}: Key Strategies for ${bookDetails.targetAudience}`,
-          content: `## Introduction to Chapter ${i}
-
-This is a demonstration chapter that showcases the proper formatting for your ${bookDetails.title} e-book. In a real scenario, this content would be generated using AI based on your specific requirements.
-
-## Understanding Your Target Audience
-
-When writing for ${bookDetails.targetAudience}, it's essential to consider their unique needs and challenges. This chapter addresses those specific concerns with a ${bookDetails.toneStyle} approach.
-
-### Key Points to Remember
-
-- **Practical Application**: Every concept should be immediately applicable
-- **Clear Examples**: Real-world scenarios help illustrate complex ideas
-- **Actionable Steps**: Readers should know exactly what to do next
-
-## Main Section: Core Strategies
-
-This section would contain the primary content for this chapter, tailored specifically to your book's mission: ${bookDetails.mission}
-
-### Subsection 1: Foundation Building
-
-Here's where we'd establish the fundamental concepts that ${bookDetails.targetAudience} needs to understand.
-
-### Subsection 2: Advanced Techniques
-
-Building on the foundation, this section would introduce more sophisticated approaches.
-
-## Practical Implementation
-
-This section would provide step-by-step guidance for implementing the concepts discussed in this chapter.
-
-## Chapter Summary
-
-- Key takeaway 1: Understanding the ${bookDetails.targetAudience} perspective
-- Key takeaway 2: Applying ${bookDetails.toneStyle} communication techniques
-- Key takeaway 3: Moving forward with confidence
-
-## What's Next
-
-The next chapter will build upon these concepts to dive deeper into advanced strategies for achieving your goals.
-
-*Note: This is demo content. With proper API credits, each chapter would be fully customized based on your specific book details and requirements.*`,
+          content: "",
           isExpanded: i === 1
         });
       }
