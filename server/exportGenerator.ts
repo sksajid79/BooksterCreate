@@ -42,23 +42,40 @@ async function ensureExportDir() {
 function removeDuplicateChapterTitle(content: string, chapterTitle: string): string {
   if (!content || !chapterTitle) return content;
   
-  const paragraphs = content.split('\n\n');
-  if (paragraphs.length === 0) return content;
-  
-  const firstParagraph = paragraphs[0].trim();
   const cleanTitle = chapterTitle.trim();
+  let cleanedContent = content;
   
-  // Check if first paragraph is exactly the chapter title or contains it
-  if (firstParagraph === cleanTitle || 
-      firstParagraph === `# ${cleanTitle}` ||
-      firstParagraph === `## ${cleanTitle}` ||
-      firstParagraph.startsWith(`${cleanTitle}\n`) ||
-      firstParagraph.endsWith(cleanTitle)) {
-    // Remove the first paragraph and return the rest
-    return paragraphs.slice(1).join('\n\n').trim();
+  // Split by both single and double newlines to catch different patterns
+  const lines = cleanedContent.split('\n');
+  if (lines.length === 0) return content;
+  
+  let startIndex = 0;
+  
+  // Check the first few lines for duplicate titles
+  for (let i = 0; i < Math.min(3, lines.length); i++) {
+    const line = lines[i].trim();
+    
+    if (line === cleanTitle || 
+        line === `# ${cleanTitle}` ||
+        line === `## ${cleanTitle}` ||
+        line === `### ${cleanTitle}` ||
+        line === `#### ${cleanTitle}` ||
+        line === `##### ${cleanTitle}` ||
+        line === `###### ${cleanTitle}`) {
+      startIndex = i + 1;
+      // Skip any empty lines immediately after the duplicate title
+      while (startIndex < lines.length && lines[startIndex].trim() === '') {
+        startIndex++;
+      }
+    }
   }
   
-  return content;
+  // If we found duplicates to remove, reconstruct content
+  if (startIndex > 0) {
+    cleanedContent = lines.slice(startIndex).join('\n').trim();
+  }
+  
+  return cleanedContent;
 }
 
 // Template styles mapping
