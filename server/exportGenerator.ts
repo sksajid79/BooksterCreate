@@ -38,6 +38,29 @@ async function ensureExportDir() {
   }
 }
 
+// Helper function to remove duplicate chapter titles from content
+function removeDuplicateChapterTitle(content: string, chapterTitle: string): string {
+  if (!content || !chapterTitle) return content;
+  
+  const paragraphs = content.split('\n\n');
+  if (paragraphs.length === 0) return content;
+  
+  const firstParagraph = paragraphs[0].trim();
+  const cleanTitle = chapterTitle.trim();
+  
+  // Check if first paragraph is exactly the chapter title or contains it
+  if (firstParagraph === cleanTitle || 
+      firstParagraph === `# ${cleanTitle}` ||
+      firstParagraph === `## ${cleanTitle}` ||
+      firstParagraph.startsWith(`${cleanTitle}\n`) ||
+      firstParagraph.endsWith(cleanTitle)) {
+    // Remove the first paragraph and return the rest
+    return paragraphs.slice(1).join('\n\n').trim();
+  }
+  
+  return content;
+}
+
 // Template styles mapping
 const getTemplateStyles = (templateId: string) => {
   const templates = {
@@ -234,8 +257,9 @@ function generateHTMLContent(bookData: BookData, options: ExportOptions = { incl
         <h1 class="chapter-title">Chapter ${index + 1}: ${chapter.title}</h1>
         <div class="chapter-content">`;
     
-    // Process chapter content
-    const paragraphs = chapter.content.split('\n\n');
+    // Process chapter content (remove duplicate title)
+    const cleanContent = removeDuplicateChapterTitle(chapter.content, chapter.title);
+    const paragraphs = cleanContent.split('\n\n');
     paragraphs.forEach(paragraph => {
       const trimmed = paragraph.trim();
       if (trimmed) {
@@ -634,8 +658,9 @@ export async function exportToMarkdown(bookData: BookData): Promise<string> {
   bookData.chapters.forEach((chapter, index) => {
     markdown += `## Chapter ${index + 1}: ${chapter.title}\n\n`;
     
-    // Process chapter content
-    const paragraphs = chapter.content.split('\n\n');
+    // Process chapter content (remove duplicate title)
+    const cleanContent = removeDuplicateChapterTitle(chapter.content, chapter.title);
+    const paragraphs = cleanContent.split('\n\n');
     paragraphs.forEach(paragraph => {
       const trimmed = paragraph.trim();
       if (trimmed) {
@@ -821,8 +846,9 @@ p {
 <body>
   <h1>Chapter ${index + 1}: ${chapter.title}</h1>`;
 
-    // Process chapter content
-    const paragraphs = chapter.content.split('\n\n');
+    // Process chapter content (remove duplicate title)
+    const cleanContent = removeDuplicateChapterTitle(chapter.content, chapter.title);
+    const paragraphs = cleanContent.split('\n\n');
     paragraphs.forEach(paragraph => {
       const trimmed = paragraph.trim();
       if (trimmed) {
@@ -992,7 +1018,8 @@ export async function exportToDOCX(bookData: BookData, options?: ExportOptions):
       })
     );
     
-    const chapterParagraphs = chapter.content.split('\n\n');
+    const cleanContent = removeDuplicateChapterTitle(chapter.content, chapter.title);
+    const chapterParagraphs = cleanContent.split('\n\n');
     chapterParagraphs.forEach(paragraph => {
       const trimmed = paragraph.trim();
       if (trimmed) {
