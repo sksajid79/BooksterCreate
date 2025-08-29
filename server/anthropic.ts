@@ -113,20 +113,29 @@ Make sure the content is professional, engaging, and provides real value to the 
     let chapters;
     let jsonString = '';
     
+    // Enhanced JSON extraction with multiple patterns
     // First try to find JSON in markdown code blocks
-    const codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
+    let codeBlockMatch = content.match(/```json\s*([\s\S]*?)\s*```/);
     if (codeBlockMatch) {
       jsonString = codeBlockMatch[1].trim();
     } else {
-      // Try to find JSON array directly
-      const directJsonMatch = content.match(/\[\s*\{[\s\S]*?\}\s*\]/);
-      if (directJsonMatch) {
-        jsonString = directJsonMatch[0];
-      } else {
-        // Try to find JSON with looser matching
-        const looserMatch = content.match(/(\[[\s\S]*\])/);
-        if (looserMatch) {
-          jsonString = looserMatch[1];
+      // Try to find JSON array with flexible whitespace matching
+      const patterns = [
+        /\[\s*{[\s\S]*?}\s*\]/,                    // Standard array pattern
+        /(\[[\s\S]*?\])/,                          // Looser array pattern
+        /^(\s*\[[\s\S]*\]\s*)$/,                   // Full content is JSON
+        /\n(\[[\s\S]*\])\n/,                       // JSON on separate lines
+        /JSON:\s*(\[[\s\S]*\])/i,                  // JSON: prefix
+        /(?:^|\n)(\[[\s\S]*?\])(?:\n|$)/           // Line-separated JSON
+      ];
+      
+      for (const pattern of patterns) {
+        const match = content.match(pattern);
+        if (match) {
+          jsonString = match[1] || match[0];
+          if (jsonString.trim().startsWith('[') && jsonString.trim().endsWith(']')) {
+            break;
+          }
         }
       }
     }

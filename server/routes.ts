@@ -13,76 +13,151 @@ import path from "path";
 function getDefaultPrompts() {
   return {
     book_outline: {
-      prompt: `You are a professional e-book writer and content strategist. Create a comprehensive e-book with detailed chapters based on the following details:
+      prompt: `You are a world-class e-book author and content strategist with expertise in creating bestselling non-fiction books. Your mission is to create an exceptional {numberOfChapters}-chapter e-book that will become the definitive guide for {targetAudience}.
 
-Title: {title}
-Target Audience: {targetAudience}
-Topic/Description: {description}
-Tone & Style: {toneStyle}
-Mission/Goal: {mission}
+## BOOK SPECIFICATIONS
+**Title:** {title}
+**Target Audience:** {targetAudience}
+**Description:** {description}
+**Tone & Style:** {toneStyle}
+**Core Mission:** {mission}
 
-Generate {numberOfChapters} complete chapters for this e-book. Each chapter should have:
-1. A compelling chapter title (WITHOUT the word "Chapter" or numbers)
-2. Detailed, engaging content (800-1200 words per chapter)
-3. Practical advice, real-world examples, and actionable strategies
-4. Professional tone that matches the specified style and target audience
+## CONTENT REQUIREMENTS FOR EACH CHAPTER
+Each chapter must be a masterpiece that includes:
 
-CRITICAL FORMATTING RULES:
-- Respond with ONLY a valid JSON array
-- Do NOT include any explanation, commentary, or markdown formatting
-- Do NOT include the words "title:" or "content:" in the actual text
-- Start your response directly with [ and end with ]
-- Chapter titles should be clean titles only (e.g., "Understanding Your Teen's Brain")
-- Chapter content should be well-formatted prose with proper headings using ## for sections
+### STRUCTURE (2000-3000 words per chapter)
+- **Compelling opening hook** that immediately engages {targetAudience}
+- **2-3 main sections** with descriptive subheadings (##)
+- **Multiple subsections** (###) for detailed exploration
+- **Practical implementation section** with step-by-step guidance
+- **Real-world examples and case studies** relevant to {targetAudience}
+- **Actionable takeaways** and summary
 
-Example format:
+### QUALITY STANDARDS
+- **Expert-level depth:** Provide insights that go beyond surface-level advice
+- **Practical focus:** Every concept must include specific, actionable steps
+- **Evidence-based:** Reference research, studies, or proven methodologies where appropriate
+- **Engaging narrative:** Use storytelling, analogies, and relatable examples
+- **Progressive learning:** Each chapter builds upon previous concepts
+- **Professional formatting:** Use markdown extensively (##, ###, **, -, bullet points)
+
+### CONTENT ELEMENTS TO INCLUDE
+- Industry best practices and cutting-edge strategies
+- Common mistakes and how to avoid them
+- Tools, resources, and frameworks
+- Success stories and transformation examples
+- Troubleshooting guides for common challenges
+- Future-focused insights and trends
+
+## JSON OUTPUT FORMAT
+Return ONLY a valid JSON array with no additional text, explanations, or formatting:
+
 [
   {
     "id": "1",
-    "title": "Understanding Your Teen's Brain",
-    "content": "## The Science Behind Teenage Behavior\n\nParenting a teenager can feel like navigating uncharted territory...\n\n## Key Development Stages\n\nDuring adolescence, several critical changes occur..."
-  },
-  {
-    "id": "2", 
-    "title": "Building Strong Communication",
-    "content": "## Why Traditional Methods Don't Work\n\nMany parents find that communication strategies that worked with younger children...\n\n## Effective Listening Techniques\n\nThe foundation of good communication..."
+    "title": "Compelling Chapter Title That Hooks the Reader",
+    "content": "## Opening Hook Section\n\nStart with a powerful story, statistic, or question that immediately captures attention...\n\n## Core Concept 1: Main Learning Objective\n\nProvide comprehensive explanation with depth and nuance...\n\n### Practical Implementation\n\nStep-by-step guidance for immediate application...\n\n### Real-World Example\n\nDetailed case study or example...\n\n## Core Concept 2: Advanced Strategies\n\nBuild upon foundation with sophisticated approaches...\n\n### Common Pitfalls to Avoid\n\nSpecific mistakes and prevention strategies...\n\n## Action Plan and Next Steps\n\nClear, specific actions readers can take immediately...\n\n### Key Takeaways\n\n- Specific, memorable insight 1\n- Actionable strategy 2\n- Important mindset shift 3"
   }
 ]
 
-Make sure each chapter provides substantial, professional content that delivers real value to {targetAudience}. Use markdown formatting (## for headings, **bold** for emphasis) within the content. Return only the JSON array, nothing else.`
+## FINAL INSTRUCTIONS
+- Create titles that are specific, benefit-focused, and intriguing
+- Ensure each chapter delivers transformational value to {targetAudience}
+- Maintain consistent {toneStyle} throughout
+- Make content immediately actionable and practically applicable
+- Use engaging, conversational language while maintaining professional authority
+- Return ONLY the JSON array - no explanations, no markdown code blocks, just the raw JSON`
     },
     chapter_generation: {
-      prompt: `As an expert e-book author, generate comprehensive content for the chapter titled "{chapterTitle}" with proper structure, engaging content, and actionable insights.
+      prompt: `You are a world-renowned expert author specializing in {targetAudience} success strategies. You're writing the definitive chapter on "{chapterTitle}" for the book "{title}". This chapter must be exceptional - the kind of content that readers will highlight, share, and return to repeatedly.
 
-Book Context:
-- Title: {title}
-- Target Audience: {targetAudience}
-- Description: {description}
-- Tone & Style: {toneStyle}
-- Mission: {mission}
+## BOOK CONTEXT
+**Title:** {title}
+**Target Audience:** {targetAudience}
+**Book Description:** {description}
+**Tone & Style:** {toneStyle}
+**Core Mission:** {mission}
 
-Chapter Details:
-- Chapter Title: {chapterTitle}
+## CHAPTER MISSION
+Create a comprehensive, transformational chapter titled "{chapterTitle}" that becomes the go-to resource for {targetAudience} on this specific topic.
 
-Requirements:
-1. Write 1500-2500 words for this chapter
-2. Use markdown headings (## for main sections, ### for subsections)
-3. Include engaging introductions and conclusions for each section
-4. Provide practical examples, tips, or case studies
-5. Maintain professional quality while being accessible to the target audience
-6. Use actionable language that provides real value to readers
-7. Include relevant insights that advance the book's overall mission
+## CONTENT SPECIFICATIONS (2500-3500 words)
 
-Structure should include:
-- Chapter introduction (hook the reader)
-- 3-4 main sections with ## headings
-- Practical examples or actionable tips
-- Key takeaways or chapter summary
-- Smooth transitions between sections
+### OPENING SECTION (300-400 words)
+- **Powerful Hook:** Start with a compelling story, surprising statistic, thought-provoking question, or bold statement
+- **Problem Recognition:** Help readers identify why this topic matters to them personally
+- **Promise:** Clearly state what they'll achieve by reading this chapter
+- **Roadmap:** Brief overview of what's coming
 
-IMPORTANT: Return ONLY the chapter content as clean, well-formatted text using markdown. Do NOT include any JSON formatting, property names, or extra explanations. Start directly with the chapter content.
+### MAIN CONTENT STRUCTURE
 
-Write in a {toneStyle} tone that resonates with {targetAudience}. Focus on delivering value and maintaining engagement throughout.`
+#### Section 1: Foundation & Context (600-800 words)
+- **## [Descriptive Heading]**
+- Deep dive into the fundamental concepts
+- Why traditional approaches often fail
+- What makes this approach different
+- Research or evidence backing your approach
+
+#### Section 2: Core Strategy/Framework (800-1000 words)
+- **## [Action-Oriented Heading]**
+- Your primary methodology or system
+- **### Step-by-step breakdown** with specific, actionable instructions
+- **### Tools and resources** needed for implementation
+- **### Real-world application examples** relevant to {targetAudience}
+
+#### Section 3: Advanced Implementation (600-800 words)
+- **## [Results-Focused Heading]**
+- Advanced techniques for maximizing results
+- **### Common obstacles** and how to overcome them
+- **### Troubleshooting guide** for typical challenges
+- **### Success accelerators** and optimization strategies
+
+#### Section 4: Practical Application (400-500 words)
+- **## Putting It Into Action**
+- **### Immediate next steps** (what to do today)
+- **### 30-day implementation plan**
+- **### Long-term mastery roadmap**
+- **### Measuring progress and success**
+
+### CLOSING SECTION (200-300 words)
+- **## Key Takeaways and Next Steps**
+- Powerful summary of core insights
+- Motivational closing that inspires action
+- Smooth transition to next chapter concepts
+
+## QUALITY REQUIREMENTS
+
+### Content Excellence
+- **Authority:** Demonstrate deep expertise and insider knowledge
+- **Practicality:** Every concept must include specific, actionable steps
+- **Engagement:** Use storytelling, analogies, and relatable examples throughout
+- **Value Density:** Pack maximum insights per paragraph
+- **Originality:** Provide fresh perspectives and unique frameworks
+
+### Writing Standards
+- **Tone:** Maintain consistent {toneStyle} that resonates with {targetAudience}
+- **Clarity:** Use clear, concise language while maintaining sophistication
+- **Flow:** Ensure smooth transitions between sections and concepts
+- **Formatting:** Extensive use of markdown (##, ###, **, bullet points, numbered lists)
+- **Engagement:** Vary sentence length and structure for readability
+
+### Essential Elements to Include
+- At least 2-3 real-world examples or mini case studies
+- Specific tools, templates, or frameworks
+- Actionable checklists or step-by-step processes
+- Common mistakes and prevention strategies
+- Industry insights or "insider secrets"
+- Future-thinking perspectives on the topic
+
+## CRITICAL FORMATTING INSTRUCTIONS
+- Start immediately with content (no JSON, no explanations)
+- Use ## for main sections, ### for subsections
+- Bold important concepts with **text**
+- Use bullet points (-) and numbered lists (1.) generously
+- Include practical elements like checklists and action items
+- End with clear, specific next steps
+
+Create content that positions you as the definitive expert on "{chapterTitle}" while delivering massive value to {targetAudience}. This chapter should be so good that readers consider it worth the price of the entire book.`
     }
   };
 }
