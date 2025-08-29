@@ -9,221 +9,6 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import path from "path";
 
-// Default AI prompts for book generation
-function getDefaultPrompts() {
-  return {
-    book_outline: {
-      prompt: `You are a world-renowned e-book strategist who has created 1000+ bestselling books. Create a masterful chapter structure for "{title}" - a comprehensive {numberOfChapters}-chapter guide that will become the definitive resource for {targetAudience}.
-
-## BOOK SPECIFICATIONS
-**Title:** {title}
-**Target Audience:** {targetAudience}
-**Description:** {description}
-**Tone & Style:** {toneStyle}
-**Core Mission:** {mission}
-
-## STRATEGIC OUTLINE REQUIREMENTS
-
-### CHAPTER STRUCTURE METHODOLOGY
-Your task: Create ONLY compelling chapter titles that form a complete learning journey. Do NOT generate content - that comes later.
-
-### ADVANCED TITLE GUIDELINES
-**Audience Psychology:**
-- Address specific pain points and desires of {targetAudience}
-- Use benefit-driven language that creates urgency and curiosity
-- Include power words that resonate with their goals and challenges
-- Promise specific, measurable outcomes
-
-**Progressive Structure:**
-- **Chapters 1-2:** Foundation & Problem Awareness ("Why this matters now")
-- **Chapters 3-4:** Core Methods & Frameworks ("How to do it right")
-- **Chapters 5-6:** Advanced Implementation ("Optimizing for results") 
-- **Chapters 7+:** Mastery & Integration ("Sustaining long-term success")
-
-**Title Formula:** [Specific Benefit] + [For Audience] + [Clear Outcome]
-Example: "The 5-Minute Morning Routine That Doubles Productivity for Busy Entrepreneurs"
-
-### EXPERT-LEVEL REQUIREMENTS
-- Each title must solve a specific problem or deliver a specific benefit
-- Use numbers, timeframes, or specific outcomes when relevant
-- Create curiosity gaps that compel reading
-- Ensure each chapter builds naturally to the next
-- Address the complete journey from beginner to expert
-
-## JSON OUTPUT FORMAT
-Return ONLY a valid JSON array with compelling titles and empty content:
-
-[
-  {
-    "id": "1",
-    "title": "The Hidden Cost of [Problem]: Why {targetAudience} Struggle and How to Break Free",
-    "content": ""
-  },
-  {
-    "id": "2",
-    "title": "The [Framework Name]: A Proven System That Gets [Specific Results] in [Timeframe]",
-    "content": ""
-  }
-]
-
-## CRITICAL SUCCESS FACTORS
-- Generate ONLY chapter titles - leave all "content" fields empty ("")
-- Each title must be irresistible to {targetAudience}
-- Create a logical, compelling progression that builds mastery
-- Use psychological triggers: curiosity, urgency, specificity, benefit
-- Return ONLY the JSON array - no explanations or formatting
-- Ensure titles work as a cohesive system, not standalone pieces`
-    },
-    chapter_generation: {
-      prompt: `You are the world's leading expert on {targetAudience} transformation and the #1 bestselling author in this field. You're crafting Chapter: "{chapterTitle}" for "{title}" - this single chapter must be so valuable that readers would pay for the entire book just for this content.
-
-## STRATEGIC CONTEXT
-**Book Title:** {title}
-**Target Audience:** {targetAudience}  
-**Book Mission:** {mission}
-**Description:** {description}
-**Tone & Style:** {toneStyle}
-**Chapter Focus:** {chapterTitle}
-
-## CHAPTER ARCHITECTURE (3000-4000 words)
-
-### HOOK MASTERY (Opening 400 words)
-**Attention Grabber Options (Choose Most Powerful):**
-- Shocking statistic that challenges conventional thinking
-- Personal transformation story that mirrors reader's journey
-- Costly mistake that 90% of {targetAudience} make
-- Contrarian insight that flips industry assumptions
-- "What if I told you..." revelation that changes everything
-
-**Essential Opening Elements:**
-- **Problem Agitation:** Make the pain of NOT knowing this content unbearable
-- **Credibility Markers:** Subtle authority indicators without bragging  
-- **Outcome Promise:** Specific, measurable transformation they'll achieve
-- **Curiosity Gap:** Teaser of surprising insights coming
-
-### FOUNDATIONAL MASTERY (Section 1: 800-1000 words)
-**## [Power Title That Promises Insight]**
-
-**Core Requirements:**
-- Destroy 2-3 common myths or misconceptions in your field
-- Present the "uncomfortable truth" most experts won't share
-- Introduce your unique framework with a memorable name
-- Use the "Before vs After" transformation structure
-- Include at least one "lightbulb moment" insight
-
-**Authority Builders:**
-- Reference specific research, studies, or data points
-- Share insider knowledge from your experience
-- Mention case studies or client examples (anonymized)
-- Address why traditional methods fail
-
-### IMPLEMENTATION MASTERY (Section 2: 1000-1200 words)
-**## [Action-Oriented Title Promising Results]**
-
-**The Core System/Framework:**
-- Present your methodology as a named system or framework
-- Break down into 3-7 clear, sequential steps
-- Each step must have specific actions, not just concepts
-- Include decision trees or "if this, then that" guidance
-
-**### Step 1: [Specific Action Title]**
-- What exactly to do (specific actions)
-- How to do it (detailed process)
-- When to do it (timing/sequence)
-- Why it works (brief explanation)
-- Common mistakes to avoid
-
-**### Step 2-N: [Follow Same Pattern]**
-
-**Real-World Application:**
-- 2-3 detailed case studies or examples
-- Tools, templates, or resources needed
-- Troubleshooting guide for common issues
-- Success metrics and what to measure
-
-### OPTIMIZATION MASTERY (Section 3: 800-1000 words) 
-**## [Results-Focused Title About Maximizing Outcomes]**
-
-**Advanced Strategies:**
-- "Power moves" that 10x results
-- Shortcuts that save time without sacrificing quality
-- Psychological principles that amplify effectiveness
-- Systems for continuous improvement
-
-**### Obstacle Navigation**
-- Top 5 challenges {targetAudience} face with this topic
-- Specific solutions for each obstacle
-- Warning signs to watch for
-- Recovery strategies when things go wrong
-
-**### Acceleration Techniques**
-- Advanced tips for experienced practitioners
-- Combination strategies that stack benefits
-- Timing optimizations and seasonal considerations
-- Technology or tools that amplify results
-
-### ACTION MASTERY (Final Section: 400-600 words)
-**## Your Next 30 Days: From Knowledge to Results**
-
-**Implementation Roadmap:**
-- **Days 1-7:** Initial setup and foundation building
-- **Days 8-14:** Core implementation and first results
-- **Days 15-21:** Optimization and troubleshooting 
-- **Days 22-30:** Advanced techniques and mastery habits
-
-**Success Tracking:**
-- Specific metrics to measure progress
-- Milestone celebrations and momentum builders
-- When to adjust strategy based on results
-- How to maintain long-term consistency
-
-## WORLD-CLASS WRITING STANDARDS
-
-### Content Excellence
-- **Unique Value:** Information available nowhere else
-- **Immediate Application:** Readers can use this today
-- **Transformation Focus:** Clear before/after outcomes
-- **Authority Positioning:** Demonstrate deep expertise naturally
-- **Engagement Mastery:** Stories, analogies, and relatable examples throughout
-
-### Advanced Writing Techniques
-- **Psychological Triggers:** Use curiosity, urgency, and social proof
-- **Conversational Authority:** {toneStyle} that builds trust and connection
-- **Visual Content:** Use formatting to enhance readability and comprehension
-- **Transition Mastery:** Smooth bridges between all sections and ideas
-- **Retention Enhancers:** Summaries, key points, and memorable frameworks
-
-### Essential Content Elements
-- 3+ real-world case studies or detailed examples
-- Named framework, system, or methodology
-- Specific tools, templates, or resource recommendations  
-- Step-by-step process for immediate implementation
-- Troubleshooting guide and common mistake prevention
-- Advanced strategies for experienced practitioners
-- Clear success metrics and progress tracking
-- 30-day implementation roadmap
-
-## FORMATTING EXCELLENCE
-- Start immediately with compelling content (no introductions or explanations)
-- Use ## for major sections, ### for subsections and steps
-- Bold key concepts, frameworks, and important points
-- Bullet points for lists, numbered steps for processes
-- Include actionable checklists and implementation guides
-- End with specific next steps that create momentum
-
-## SUCCESS CRITERIA
-This chapter should be so valuable that readers:
-1. Immediately bookmark it for future reference
-2. Share quotes and insights with others
-3. Consider it worth the price of the entire book
-4. Experience measurable results within 30 days
-5. View you as the definitive expert on this topic
-
-Create transformational content that establishes ultimate authority while delivering unprecedented value to {targetAudience}.`
-    }
-  };
-}
-
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", (req, res) => {
@@ -357,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       // Get all users for admin management
-      const allUsers = await db.select({
+      const users = await db.select({
         id: users.id,
         username: users.username,
         email: users.email,
@@ -368,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       }).from(users);
-      res.json(allUsers);
+      res.json(users);
     } catch (error) {
       console.error("Admin users fetch error:", error);
       res.status(500).json({ error: "Failed to fetch users" });
@@ -388,72 +173,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin user update error:", error);
       res.status(500).json({ error: "Failed to update user" });
-    }
-  });
-
-  // AI Prompts management routes
-  app.get("/api/admin/prompts", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-    try {
-      // Get all prompt configs
-      const configs = await storage.getAllAdminConfigs();
-      const prompts = configs.filter(config => 
-        config.configKey.startsWith('prompt_') || 
-        config.configKey.includes('_prompt')
-      );
-      res.json(prompts);
-    } catch (error) {
-      console.error("Admin prompts fetch error:", error);
-      res.status(500).json({ error: "Failed to fetch AI prompts" });
-    }
-  });
-
-  app.get("/api/admin/prompts/:promptType", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-    try {
-      const { promptType } = req.params; // 'book_outline' or 'chapter_generation'
-      const configKey = `prompt_${promptType}`;
-      const config = await storage.getAdminConfig(configKey);
-      
-      if (!config) {
-        // Return default prompt if not found
-        const defaultPrompts = getDefaultPrompts();
-        const defaultPrompt = (defaultPrompts as any)[promptType];
-        if (!defaultPrompt) {
-          return res.status(404).json({ error: "Prompt type not found" });
-        }
-        return res.json({
-          configKey,
-          configValue: defaultPrompt,
-          description: `Default ${promptType.replace('_', ' ')} prompt`
-        });
-      }
-      
-      res.json(config);
-    } catch (error) {
-      console.error("Admin prompt fetch error:", error);
-      res.status(500).json({ error: "Failed to fetch AI prompt" });
-    }
-  });
-
-  app.put("/api/admin/prompts/:promptType", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
-    try {
-      const { promptType } = req.params; // 'book_outline' or 'chapter_generation'
-      const { prompt, description } = req.body;
-      
-      if (!prompt || typeof prompt !== 'string') {
-        return res.status(400).json({ error: "Prompt content is required" });
-      }
-      
-      const configKey = `prompt_${promptType}`;
-      const config = await storage.setAdminConfig({
-        configKey,
-        configValue: { prompt },
-        description: description || `${promptType.replace('_', ' ')} prompt`
-      });
-      
-      res.json(config);
-    } catch (error) {
-      console.error("Admin prompt update error:", error);
-      res.status(500).json({ error: "Failed to update AI prompt" });
     }
   });
 
@@ -685,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const { chapterTitle, bookDetails, allChapterTitles, chapterIndex } = req.body;
+      const { chapterTitle, bookDetails } = req.body;
       
       if (!chapterTitle || !bookDetails) {
         return res.status(400).json({ 
@@ -693,7 +412,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const content = await regenerateChapter(chapterTitle, bookDetails, allChapterTitles, chapterIndex);
+      const content = await regenerateChapter(chapterTitle, bookDetails);
       
       // Deduct credit after successful regeneration (unless admin)
       if (req.user.role !== "admin") {

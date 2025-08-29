@@ -2,41 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
-// Environment variable validation
-function validateEnvironment() {
-  const requiredVars = {
-    DATABASE_URL: process.env.DATABASE_URL,
-    // Either JWT_SECRET or SESSION_SECRET is required for authentication
-    SECRET: process.env.JWT_SECRET || process.env.SESSION_SECRET,
-  };
-
-  const missing = Object.entries(requiredVars)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key === 'SECRET' ? 'JWT_SECRET or SESSION_SECRET' : key);
-
-  if (missing.length > 0) {
-    const errorMsg = `Missing required environment variables: ${missing.join(', ')}`;
-    console.error('❌ Deployment Error:', errorMsg);
-    console.error('Please configure these environment variables in your deployment settings.');
-    console.error('For production deployment, ensure you have set:');
-    console.error('- DATABASE_URL (PostgreSQL connection string)');
-    console.error('- SESSION_SECRET or JWT_SECRET (for authentication)');
-    throw new Error(errorMsg);
-  }
-
-  // Validate PORT if provided
-  const port = process.env.PORT;
-  if (port && (isNaN(parseInt(port)) || parseInt(port) < 1 || parseInt(port) > 65535)) {
-    const errorMsg = `Invalid PORT environment variable: ${port}. Must be a number between 1-65535.`;
-    console.error('❌ Configuration Error:', errorMsg);
-    throw new Error(errorMsg);
-  }
-
-  console.log('✅ Environment variables validated successfully');
-  console.log(`Database: ${process.env.DATABASE_URL ? 'Connected' : 'Not configured'}`);
-  console.log(`Auth Secret: ${(process.env.JWT_SECRET || process.env.SESSION_SECRET) ? 'Configured' : 'Not configured'}`);
-}
-
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -72,36 +37,14 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  // Validate environment variables before starting server
-  try {
-    validateEnvironment();
-  } catch (error) {
-    console.error('Server startup failed:', error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
-
-  let server;
-  try {
-    server = await registerRoutes(app);
-    console.log('✅ Routes registered successfully');
-  } catch (error) {
-    console.error('❌ Failed to register routes:', error instanceof Error ? error.message : String(error));
-    process.exit(1);
-  }
+  const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    console.error('❌ Express error:', {
-      status,
-      message,
-      stack: err.stack,
-      url: _req.url,
-      method: _req.method
-    });
-
     res.status(status).json({ message });
+    throw err;
   });
 
   // importantly only setup vite in development and after
@@ -122,12 +65,7 @@ app.use((req, res, next) => {
     port,
     host: "0.0.0.0",
     reusePort: true,
-  }, (err?: Error) => {
-    if (err) {
-      console.error('❌ Server failed to start:', err);
-      process.exit(1);
-    }
-    log(`✅ Server successfully listening on 0.0.0.0:${port}`);
-    log(`Environment: ${app.get('env') || 'development'}`);
+  }, () => {
+    log(`serving on port ${port}`);
   });
 })();
