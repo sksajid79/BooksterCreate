@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye, BookOpen, Code, Smartphone } from "lucide-react";
+import { Book, ArrowLeft, Sparkles, PenTool, Upload, FileText, ChevronRight, Edit, Bold, Italic, Underline, Link2, List, AlignLeft, GripVertical, RefreshCw, Trash2, CheckCircle, ChevronUp, ChevronDown, Check, Star, Palette, Briefcase, GraduationCap, Image, Replace, Download, Eye, BookOpen, Code, Smartphone, Zap, FileCheck } from "lucide-react";
 
 // Step definitions
 const STEPS = [
@@ -34,6 +34,8 @@ interface Chapter {
   title: string;
   content: string;
   isExpanded: boolean;
+  wordCount?: number;
+  isGenerating?: boolean;
 }
 
 interface BookFormData {
@@ -60,6 +62,8 @@ export default function CreateBook() {
   const { user, refreshUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
+  const [generatingChapterId, setGeneratingChapterId] = useState<string | null>(null);
+  const [isGeneratingAll, setIsGeneratingAll] = useState(false);
   const [currentBookId, setCurrentBookId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const queryClient = useQueryClient();
@@ -109,7 +113,7 @@ export default function CreateBook() {
         stepName,
         stepData,
         isCompleted: true,
-        completedAt: new Date().toISOString()
+        completedAt: new Date()
       });
       return response.json();
     }
@@ -131,18 +135,145 @@ export default function CreateBook() {
   });
 
   const regenerateChapterMutation = useMutation({
-    mutationFn: async ({ chapterTitle, bookDetails }: { chapterTitle: string, bookDetails: any }) => {
+    mutationFn: async ({ chapterId, chapterTitle, bookDetails }: { chapterId: string, chapterTitle: string, bookDetails: any }) => {
+      // Mark chapter as generating
+      setGeneratingChapterId(chapterId);
+      setFormData(prev => ({
+        ...prev,
+        chapters: prev.chapters.map(c => 
+          c.id === chapterId 
+            ? { ...c, isGenerating: true }
+            : c
+        )
+      }));
+
       const response = await apiRequest('POST', '/api/chapters/regenerate', { chapterTitle, bookDetails });
       return response.json();
     },
     onSuccess: (data, variables) => {
+      const wordCount = calculateWordCount(data.content);
       setFormData(prev => ({
         ...prev,
         chapters: prev.chapters.map(chapter =>
-          chapter.title === variables.chapterTitle
-            ? { ...chapter, content: data.content }
+          chapter.id === variables.chapterId
+            ? { 
+                ...chapter, 
+                content: data.content,
+                wordCount,
+                isGenerating: false 
+              }
             : chapter
         )
+      }));
+      setGeneratingChapterId(null);
+    },
+    onError: (error, variables) => {
+      console.error('Failed to regenerate chapter:', error);
+      setFormData(prev => ({
+        ...prev,
+        chapters: prev.chapters.map(c => 
+          c.id === variables.chapterId 
+            ? { ...c, isGenerating: false }
+            : c
+        )
+      }));
+      setGeneratingChapterId(null);
+    }
+  });
+
+  // Helper function to calculate word count
+  const calculateWordCount = (text: string): number => {
+    if (!text || text.trim() === '') return 0;
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  };
+
+  // Generate all chapters sequentially
+  const generateAllChaptersMutation = useMutation({
+    mutationFn: async () => {
+      setIsGeneratingAll(true);
+      const bookDetails = {
+        title: formData.title,
+        subtitle: formData.subtitle,
+        description: formData.description,
+        targetAudience: formData.targetAudience,
+        toneStyle: formData.toneStyle,
+        mission: formData.mission,
+        author: formData.author,
+        numberOfChapters: formData.numberOfChapters
+      };
+
+      const results = [];
+      for (let i = 0; i < formData.chapters.length; i++) {
+        const chapter = formData.chapters[i];
+        if (!chapter.content || chapter.content.trim() === '') {
+          setGeneratingChapterId(chapter.id);
+          
+          // Mark chapter as generating
+          setFormData(prev => ({
+            ...prev,
+            chapters: prev.chapters.map(c => 
+              c.id === chapter.id 
+                ? { ...c, isGenerating: true }
+                : c
+            )
+          }));
+
+          try {
+            const response = await apiRequest('POST', '/api/chapters/regenerate', { 
+              chapterTitle: chapter.title, 
+              bookDetails 
+            });
+            const data = await response.json();
+            const wordCount = calculateWordCount(data.content);
+            
+            // Update chapter with content and word count
+            setFormData(prev => ({
+              ...prev,
+              chapters: prev.chapters.map(c => 
+                c.id === chapter.id 
+                  ? { 
+                      ...c, 
+                      content: data.content, 
+                      wordCount,
+                      isGenerating: false 
+                    }
+                  : c
+              )
+            }));
+            
+            results.push({ chapterId: chapter.id, success: true, wordCount });
+            
+            // Small delay between chapters for better UX
+            if (i < formData.chapters.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+          } catch (error) {
+            console.error(`Failed to generate chapter ${chapter.title}:`, error);
+            setFormData(prev => ({
+              ...prev,
+              chapters: prev.chapters.map(c => 
+                c.id === chapter.id 
+                  ? { ...c, isGenerating: false }
+                  : c
+              )
+            }));
+            results.push({ chapterId: chapter.id, success: false, error: error instanceof Error ? error.message : 'Unknown error' });
+          }
+        }
+      }
+      
+      setGeneratingChapterId(null);
+      setIsGeneratingAll(false);
+      return results;
+    },
+    onError: (error) => {
+      console.error('Failed to generate all chapters:', error);
+      setGeneratingChapterId(null);
+      setIsGeneratingAll(false);
+      setFormData(prev => ({
+        ...prev,
+        chapters: prev.chapters.map(c => ({ ...c, isGenerating: false }))
       }));
     }
   });
@@ -306,7 +437,7 @@ export default function CreateBook() {
         mission: formData.mission,
         author: formData.author
       };
-      regenerateChapterMutation.mutate({ chapterTitle: chapter.title, bookDetails });
+      regenerateChapterMutation.mutate({ chapterId: chapterId, chapterTitle: chapter.title, bookDetails });
     }
   };
 
@@ -799,19 +930,71 @@ export default function CreateBook() {
                   </AlertDescription>
                 </Alert>
 
+                {/* Generate All Chapters Button */}
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-semibold">Chapter Generation</h2>
+                  <Button
+                    onClick={() => generateAllChaptersMutation.mutate()}
+                    disabled={isGeneratingAll || generateAllChaptersMutation.isPending}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white shadow-lg"
+                    data-testid="button-generate-all-chapters"
+                  >
+                    {isGeneratingAll ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                        Generating All...
+                      </>
+                    ) : (
+                      <>
+                        <Zap className="w-4 h-4 mr-2" />
+                        Generate All Chapters
+                      </>
+                    )}
+                  </Button>
+                </div>
+
                 {/* Chapters List */}
                 <div className="space-y-4" data-testid="chapters-list">
                   {formData.chapters.map((chapter, index) => (
-                    <Card key={chapter.id} className="border border-border" data-testid={`chapter-${chapter.id}`}>
+                    <Card key={chapter.id} className={`border border-border transition-all duration-500 ${
+                      chapter.isGenerating || generatingChapterId === chapter.id 
+                        ? 'border-blue-300 bg-blue-50/50 shadow-lg transform scale-[1.02]' 
+                        : 'hover:shadow-md'
+                    }`} data-testid={`chapter-${chapter.id}`}>
                       <div className="flex items-center justify-between p-4 border-b border-border">
                         <div className="flex items-center space-x-3">
                           <div className="cursor-move" data-testid={`chapter-drag-${chapter.id}`}>
                             <GripVertical className="h-4 w-4 text-muted-foreground" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-medium text-foreground" data-testid={`chapter-title-${chapter.id}`}>
-                              {chapter.title}
-                            </h3>
+                            <div className="flex items-center justify-between">
+                              <h3 className={`font-medium ${
+                                chapter.isGenerating || generatingChapterId === chapter.id 
+                                  ? 'text-blue-700 animate-pulse' 
+                                  : 'text-foreground'
+                              }`} data-testid={`chapter-title-${chapter.id}`}>
+                                {chapter.title}
+                              </h3>
+                              <div className="flex items-center space-x-3 text-sm text-muted-foreground">
+                                {(chapter.isGenerating || generatingChapterId === chapter.id) && (
+                                  <div className="flex items-center space-x-2 text-blue-600">
+                                    <RefreshCw className="w-3 h-3 animate-spin" />
+                                    <span className="font-medium animate-pulse">Generating...</span>
+                                  </div>
+                                )}
+                                {chapter.wordCount !== undefined && chapter.wordCount > 0 && (
+                                  <Badge variant="secondary" className="flex items-center space-x-1">
+                                    <FileCheck className="w-3 h-3" />
+                                    <span>{chapter.wordCount} words</span>
+                                  </Badge>
+                                )}
+                                {!chapter.content && !chapter.isGenerating && generatingChapterId !== chapter.id && (
+                                  <Badge variant="outline" className="text-muted-foreground">
+                                    Not generated
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                         
@@ -835,10 +1018,14 @@ export default function CreateBook() {
                             size="sm"
                             onClick={() => regenerateChapter(chapter.id)}
                             className="text-primary hover:text-primary/80"
-                            disabled={regenerateChapterMutation.isPending}
+                            disabled={chapter.isGenerating || generatingChapterId === chapter.id || isGeneratingAll}
                             data-testid={`button-regenerate-${chapter.id}`}
                           >
-                            <RefreshCw className={`h-4 w-4 ${regenerateChapterMutation.isPending ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`h-4 w-4 ${
+                              chapter.isGenerating || generatingChapterId === chapter.id 
+                                ? 'animate-spin text-blue-600' 
+                                : ''
+                            }`} />
                           </Button>
                           
                           <Button
