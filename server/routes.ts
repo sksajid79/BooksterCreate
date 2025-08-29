@@ -5,14 +5,80 @@ import { generateChapters, regenerateChapter } from "./anthropic.js";
 import { exportToPDF, exportToHTML, exportToMarkdown, exportToEPUB, exportToDOCX } from "./exportGenerator.js";
 import { insertBookSchema, insertChapterSchema, insertBookProgressSchema, loginSchema, signupSchema } from "@shared/schema";
 import { authenticateToken, requireAdmin, requireCredits, generateToken, type AuthRequest } from "./auth";
-import { db } from "./db";
+import { db, testDatabaseConnection } from "./db";
 import { users } from "@shared/schema";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Health check endpoint
-  app.get("/api/health", (req, res) => {
-    res.json({ status: "ok" });
+  // Enhanced health check endpoint for deployment verification
+  app.get("/api/health", async (req, res) => {
+    const startTime = Date.now();
+    const healthCheck: {
+      status: "ok" | "degraded" | "error";
+      timestamp: string;
+      uptime: number;
+      environment: string;
+      database: {
+        status: "unknown" | "healthy" | "unhealthy" | "error";
+        responseTime: number;
+      };
+      services: {
+        server: string;
+      };
+      responseTime?: number;
+      error?: string;
+    } = {
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || "development",
+      database: {
+        status: "unknown",
+        responseTime: 0
+      },
+      services: {
+        server: "healthy"
+      }
+    };
+
+    try {
+      // Test database connection
+      const dbStartTime = Date.now();
+      const isDbHealthy = await testDatabaseConnection();
+      const dbResponseTime = Date.now() - dbStartTime;
+      
+      healthCheck.database = {
+        status: isDbHealthy ? "healthy" : "unhealthy",
+        responseTime: dbResponseTime
+      };
+
+      if (!isDbHealthy) {
+        healthCheck.status = "degraded";
+        return res.status(503).json(healthCheck);
+      }
+
+      // Add response time to overall health check
+      healthCheck.responseTime = Date.now() - startTime;
+      
+      res.json(healthCheck);
+    } catch (error) {
+      console.error("Health check failed:", error);
+      
+      healthCheck.status = "error";
+      healthCheck.database.status = "error";
+      healthCheck.error = error instanceof Error ? error.message : "Unknown error";
+      
+      res.status(503).json(healthCheck);
+    }
+  });
+
+  // Simple health check endpoint for basic deployment verification
+  app.get("/api/ping", (req, res) => {
+    res.json({ 
+      status: "ok", 
+      timestamp: new Date().toISOString(),
+      message: "Server is running"
+    });
   });
 
   // Authentication routes
