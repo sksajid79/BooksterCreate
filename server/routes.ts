@@ -9,6 +9,69 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import path from "path";
 
+// Default AI prompts for book generation
+function getDefaultPrompts() {
+  return {
+    book_outline: {
+      prompt: `You are a professional e-book writer and content strategist. Create a comprehensive and engaging book outline based on the following details:
+
+Title: {title}
+Target Audience: {targetAudience}
+Topic/Description: {description}
+Tone & Style: {toneStyle}
+Mission/Goal: {mission}
+
+Please create a detailed book outline with:
+1. A compelling introduction that hooks the reader
+2. 8-12 well-structured chapters with clear progression
+3. Each chapter should have:
+   - A descriptive title
+   - 2-3 key points or subtopics to cover
+   - Clear connection to the overall book theme
+
+The outline should:
+- Flow logically from basic concepts to more advanced topics
+- Be engaging and actionable for the target audience
+- Include practical examples or case studies where relevant
+- End with a strong conclusion that reinforces the main message
+
+Format your response as a structured outline with chapter numbers, titles, and bullet points for key topics.`
+    },
+    chapter_generation: {
+      prompt: `As an expert e-book author, generate comprehensive chapters with proper structure, engaging content, and actionable insights. 
+
+Book Context:
+- Title: {title}
+- Target Audience: {targetAudience}
+- Description: {description}
+- Tone & Style: {toneStyle}
+- Mission: {mission}
+
+Chapter Details:
+- Chapter Number: {chapterNumber}
+- Chapter Title: {chapterTitle}
+
+Requirements:
+1. Write 1500-2500 words for this chapter
+2. Use clear headings and subheadings for structure
+3. Include engaging introductions and conclusions for each section
+4. Provide practical examples, tips, or case studies
+5. Maintain professional quality while being accessible to the target audience
+6. Use actionable language that provides real value to readers
+7. Include relevant insights that advance the book's overall mission
+
+Structure should include:
+- Chapter introduction (hook the reader)
+- 3-4 main sections with subheadings
+- Practical examples or actionable tips
+- Key takeaways or chapter summary
+- Smooth transition to the next chapter (when applicable)
+
+Write in a {toneStyle} tone that resonates with {targetAudience}. Focus on delivering value and maintaining engagement throughout.`
+    }
+  };
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Health check endpoint
   app.get("/api/health", (req, res) => {
@@ -142,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       // Get all users for admin management
-      const users = await db.select({
+      const allUsers = await db.select({
         id: users.id,
         username: users.username,
         email: users.email,
@@ -153,7 +216,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       }).from(users);
-      res.json(users);
+      res.json(allUsers);
     } catch (error) {
       console.error("Admin users fetch error:", error);
       res.status(500).json({ error: "Failed to fetch users" });
@@ -173,6 +236,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Admin user update error:", error);
       res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
+  // AI Prompts management routes
+  app.get("/api/admin/prompts", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Get all prompt configs
+      const configs = await storage.getAllAdminConfigs();
+      const prompts = configs.filter(config => 
+        config.configKey.startsWith('prompt_') || 
+        config.configKey.includes('_prompt')
+      );
+      res.json(prompts);
+    } catch (error) {
+      console.error("Admin prompts fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch AI prompts" });
+    }
+  });
+
+  app.get("/api/admin/prompts/:promptType", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const { promptType } = req.params; // 'book_outline' or 'chapter_generation'
+      const configKey = `prompt_${promptType}`;
+      const config = await storage.getAdminConfig(configKey);
+      
+      if (!config) {
+        // Return default prompt if not found
+        const defaultPrompts = getDefaultPrompts();
+        const defaultPrompt = defaultPrompts[promptType];
+        if (!defaultPrompt) {
+          return res.status(404).json({ error: "Prompt type not found" });
+        }
+        return res.json({
+          configKey,
+          configValue: defaultPrompt,
+          description: `Default ${promptType.replace('_', ' ')} prompt`
+        });
+      }
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Admin prompt fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch AI prompt" });
+    }
+  });
+
+  app.put("/api/admin/prompts/:promptType", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const { promptType } = req.params; // 'book_outline' or 'chapter_generation'
+      const { prompt, description } = req.body;
+      
+      if (!prompt || typeof prompt !== 'string') {
+        return res.status(400).json({ error: "Prompt content is required" });
+      }
+      
+      const configKey = `prompt_${promptType}`;
+      const config = await storage.setAdminConfig({
+        configKey,
+        configValue: { prompt },
+        description: description || `${promptType.replace('_', ' ')} prompt`
+      });
+      
+      res.json(config);
+    } catch (error) {
+      console.error("Admin prompt update error:", error);
+      res.status(500).json({ error: "Failed to update AI prompt" });
     }
   });
 
