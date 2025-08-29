@@ -193,6 +193,67 @@ Make sure the content is professional, engaging, and provides real value to the 
 
   } catch (error) {
     console.error('Error generating chapters:', error);
+    
+    // Check if this is a credit exhaustion error
+    if (error instanceof Error && error.message.includes('credit balance is too low')) {
+      console.log('API credits exhausted, returning demo chapters for testing');
+      
+      // Return demo chapters with proper formatting
+      const demoChapters = [];
+      const numChapters = bookDetails.numberOfChapters || 5;
+      
+      for (let i = 1; i <= numChapters; i++) {
+        demoChapters.push({
+          id: i.toString(),
+          title: `Demo Chapter ${i}: Key Strategies for ${bookDetails.targetAudience}`,
+          content: `## Introduction to Chapter ${i}
+
+This is a demonstration chapter that showcases the proper formatting for your ${bookDetails.title} e-book. In a real scenario, this content would be generated using AI based on your specific requirements.
+
+## Understanding Your Target Audience
+
+When writing for ${bookDetails.targetAudience}, it's essential to consider their unique needs and challenges. This chapter addresses those specific concerns with a ${bookDetails.toneStyle} approach.
+
+### Key Points to Remember
+
+- **Practical Application**: Every concept should be immediately applicable
+- **Clear Examples**: Real-world scenarios help illustrate complex ideas
+- **Actionable Steps**: Readers should know exactly what to do next
+
+## Main Section: Core Strategies
+
+This section would contain the primary content for this chapter, tailored specifically to your book's mission: ${bookDetails.mission}
+
+### Subsection 1: Foundation Building
+
+Here's where we'd establish the fundamental concepts that ${bookDetails.targetAudience} needs to understand.
+
+### Subsection 2: Advanced Techniques
+
+Building on the foundation, this section would introduce more sophisticated approaches.
+
+## Practical Implementation
+
+This section would provide step-by-step guidance for implementing the concepts discussed in this chapter.
+
+## Chapter Summary
+
+- Key takeaway 1: Understanding the ${bookDetails.targetAudience} perspective
+- Key takeaway 2: Applying ${bookDetails.toneStyle} communication techniques
+- Key takeaway 3: Moving forward with confidence
+
+## What's Next
+
+The next chapter will build upon these concepts to dive deeper into advanced strategies for achieving your goals.
+
+*Note: This is demo content. With proper API credits, each chapter would be fully customized based on your specific book details and requirements.*`,
+          isExpanded: i === 1
+        });
+      }
+      
+      return demoChapters;
+    }
+    
     throw new Error('Failed to generate chapters. Please try again.');
   }
 }
@@ -237,6 +298,46 @@ Provide 3-4 well-structured paragraphs with subheadings where appropriate.`;
 
   } catch (error) {
     console.error('Error regenerating chapter:', error);
+    
+    // Check if this is a credit exhaustion error
+    if (error instanceof Error && error.message.includes('credit balance is too low')) {
+      console.log('API credits exhausted, returning demo chapter content for testing');
+      
+      return `## Demo: ${chapterTitle}
+
+This is demonstration content for the chapter "${chapterTitle}" that showcases proper formatting. In a real scenario, this would be fully customized AI-generated content.
+
+## Understanding the Topic
+
+When addressing ${bookDetails.targetAudience}, it's important to consider their specific needs and challenges. This chapter would focus on practical solutions with a ${bookDetails.toneStyle} approach.
+
+### Key Concepts
+
+- **Targeted Approach**: Content specifically designed for ${bookDetails.targetAudience}
+- **Practical Implementation**: Real-world applications and examples
+- **Clear Guidance**: Step-by-step instructions and actionable advice
+
+## Main Content Section
+
+This section would contain comprehensive information about ${chapterTitle}, tailored to support your book's mission: ${bookDetails.mission}
+
+### Implementation Strategies
+
+Here you would find detailed strategies and techniques that readers can immediately apply to their situation.
+
+### Real-World Examples
+
+Practical examples and case studies would be included to illustrate the concepts discussed.
+
+## Chapter Summary
+
+- Key insight 1: Understanding the specific needs of ${bookDetails.targetAudience}
+- Key insight 2: Practical application of concepts related to ${chapterTitle}
+- Key insight 3: Moving forward with confidence and clear direction
+
+*Note: This is demo content. With proper API credits, this chapter would be fully customized based on your book's specific requirements and the chapter title.*`;
+    }
+    
     throw new Error('Failed to regenerating chapter. Please try again.');
   }
 }
