@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateChapters, regenerateChapter } from "./anthropic.js";
 import { exportToPDF, exportToHTML, exportToMarkdown, exportToEPUB, exportToDOCX } from "./exportGenerator.js";
-import { insertBookSchema, insertChapterSchema, insertBookProgressSchema, loginSchema, signupSchema } from "@shared/schema";
+import { insertBookSchema, insertChapterSchema, insertBookProgressSchema, loginSchema, signupSchema, Chapter } from "@shared/schema";
 import { authenticateToken, requireAdmin, requireCredits, generateToken, type AuthRequest } from "./auth";
 import { db, testDatabaseConnection } from "./db";
 import { users } from "@shared/schema";
@@ -309,8 +309,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/books/:id", async (req, res) => {
+  app.put("/api/books/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      // Check if user owns this book or is admin
+      const existingBook = await storage.getBook(req.params.id);
+      if (!existingBook) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      if (existingBook.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
       const updates = req.body;
       const book = await storage.updateBook(req.params.id, updates);
       if (!book) {
@@ -367,8 +381,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Chapter operations
-  app.post("/api/books/:bookId/chapters", async (req, res) => {
+  app.post("/api/books/:bookId/chapters", authenticateToken, async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      // Check if user owns the book or is admin
+      const book = await storage.getBook(req.params.bookId);
+      if (!book) {
+        return res.status(404).json({ error: "Book not found" });
+      }
+      
+      if (book.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
       const chapterData = insertChapterSchema.parse({
         ...req.body,
         bookId: req.params.bookId
@@ -383,14 +411,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put("/api/chapters/:id", async (req, res) => {
+  app.put("/api/chapters/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
-      const updates = req.body;
-      const chapter = await storage.updateChapter(req.params.id, updates);
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      // Get chapter to verify ownership through book
+      const chapter = await storage.updateChapter(req.params.id, {});
       if (!chapter) {
         return res.status(404).json({ error: "Chapter not found" });
       }
-      res.json(chapter);
+      
+      // Check if user owns the book containing this chapter
+      const book = await storage.getBook(chapter.bookId);
+      if (!book || (book.userId !== req.user.id && req.user.role !== "admin")) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      const updates = req.body;
+      const updatedChapter = await storage.updateChapter(req.params.id, updates);
+      res.json(updatedChapter);
     } catch (error) {
       console.error('Chapter update error:', error);
       res.status(500).json({ 
@@ -399,8 +440,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete("/api/chapters/:id", async (req, res) => {
+  app.delete("/api/chapters/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      // Get chapter to verify ownership through book
+      const chapter = await storage.updateChapter(req.params.id, {});
+      if (!chapter) {
+        return res.status(404).json({ error: "Chapter not found" });
+      }
+      
+      // Check if user owns the book containing this chapter
+      const book = await storage.getBook(chapter.bookId);
+      if (!book || (book.userId !== req.user.id && req.user.role !== "admin")) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
       const deleted = await storage.deleteChapter(req.params.id);
       if (!deleted) {
         return res.status(404).json({ error: "Chapter not found" });
@@ -674,11 +731,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             </div>
             ` : ''}
             
-            ${bookData.chapters.map((chapter, index) => `
+            ${bookData.chapters.map((chapter: Chapter, index: number) => `
                 <div class="chapter">
                     <h2 class="chapter-title">Chapter ${index + 1}: ${chapter.title}</h2>
                     <div class="chapter-content">
-                        ${chapter.content ? chapter.content.split('\\n\\n').map(p => `<p>${p.trim()}</p>`).join('') : '<p><em>Chapter content will appear here...</em></p>'}
+                        ${chapter.content ? chapter.content.split('\\n\\n').map((p: string) => `<p>${p.trim()}</p>`).join('') : '<p><em>Chapter content will appear here...</em></p>'}
                     </div>
                 </div>
             `).join('')}
