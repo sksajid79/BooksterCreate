@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { apiRequest } from "@/lib/queryClient";
 import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -87,16 +88,7 @@ export default function CreateBook() {
   // Book creation and persistence mutations
   const createBookMutation = useMutation({
     mutationFn: async (bookData: any) => {
-      const response = await fetch('/api/books', {
-        method: 'POST',
-        body: JSON.stringify(bookData),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to create book');
-      }
+      const response = await apiRequest('POST', '/api/books', bookData);
       return response.json();
     },
     onSuccess: (book) => {
@@ -106,53 +98,26 @@ export default function CreateBook() {
 
   const updateBookMutation = useMutation({
     mutationFn: async ({ bookId, updates }: { bookId: string, updates: any }) => {
-      const response = await fetch(`/api/books/${bookId}`, {
-        method: 'PUT',
-        body: JSON.stringify(updates),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to update book');
-      }
+      const response = await apiRequest('PUT', `/api/books/${bookId}`, updates);
       return response.json();
     }
   });
 
   const saveProgressMutation = useMutation({
     mutationFn: async ({ bookId, stepName, stepData }: { bookId: string, stepName: string, stepData: any }) => {
-      const response = await fetch(`/api/books/${bookId}/progress`, {
-        method: 'POST',
-        body: JSON.stringify({
-          stepName,
-          stepData,
-          isCompleted: true,
-          completedAt: new Date().toISOString()
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      const response = await apiRequest('POST', `/api/books/${bookId}/progress`, {
+        stepName,
+        stepData,
+        isCompleted: true,
+        completedAt: new Date().toISOString()
       });
-      if (!response.ok) {
-        throw new Error('Failed to save progress');
-      }
       return response.json();
     }
   });
 
   const generateChaptersMutation = useMutation({
     mutationFn: async (bookDetails: any) => {
-      const response = await fetch('/api/chapters/generate', {
-        method: 'POST',
-        body: JSON.stringify(bookDetails),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to generate chapters');
-      }
+      const response = await apiRequest('POST', '/api/chapters/generate', bookDetails);
       return response.json();
     },
     onSuccess: (data) => {
@@ -167,16 +132,7 @@ export default function CreateBook() {
 
   const regenerateChapterMutation = useMutation({
     mutationFn: async ({ chapterTitle, bookDetails }: { chapterTitle: string, bookDetails: any }) => {
-      const response = await fetch('/api/chapters/regenerate', {
-        method: 'POST',
-        body: JSON.stringify({ chapterTitle, bookDetails }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) {
-        throw new Error('Failed to regenerate chapter');
-      }
+      const response = await apiRequest('POST', '/api/chapters/regenerate', { chapterTitle, bookDetails });
       return response.json();
     },
     onSuccess: (data, variables) => {
@@ -404,19 +360,7 @@ export default function CreateBook() {
         language: formData.language
       };
 
-      const response = await fetch(`/api/export/${format}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(exportData),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Export failed');
-      }
-
+      const response = await apiRequest('POST', `/api/export/${format}`, exportData);
       return response.json();
     },
     onSuccess: (data) => {
