@@ -142,7 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
     try {
       // Get all users for admin management
-      const users = await db.select({
+      const usersList = await db.select({
         id: users.id,
         username: users.username,
         email: users.email,
@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         createdAt: users.createdAt,
         updatedAt: users.updatedAt,
       }).from(users);
-      res.json(users);
+      res.json(usersList);
     } catch (error) {
       console.error("Admin users fetch error:", error);
       res.status(500).json({ error: "Failed to fetch users" });
