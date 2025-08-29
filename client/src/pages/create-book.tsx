@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Link } from "wouter";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
+import Navigation from "@/components/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +56,7 @@ interface BookFormData {
 }
 
 export default function CreateBook() {
+  const { user, refreshUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGeneratingChapters, setIsGeneratingChapters] = useState(false);
   const [currentBookId, setCurrentBookId] = useState<string | null>(null);
@@ -538,33 +541,7 @@ export default function CreateBook() {
 
   return (
     <div className="min-h-screen bg-background" data-testid="create-book-page">
-      {/* Header */}
-      <div className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="flex items-center space-x-2" data-testid="logo">
-                <Book className="text-primary text-2xl" />
-                <span className="text-xl font-bold">MyBookStore</span>
-              </Link>
-              <div className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground">
-                <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-                <ChevronRight className="w-4 h-4" />
-                <span>Create Your Book</span>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-primary/10 text-primary" data-testid="credits-balance">
-                Credits Balance: 2
-              </Badge>
-              <Badge variant="outline" data-testid="user-status">
-                Available credits for creating books
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Navigation />
 
       {/* Progress Steps */}
       <div className="bg-muted/30 border-b border-border">

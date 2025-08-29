@@ -9,7 +9,13 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  role: text("role").default("free").notNull(), // admin, free, subscribed
+  credits: integer("credits").default(1).notNull(), // free: 1, subscribed: 10 per month
+  creditsResetDate: timestamp("credits_reset_date"),
+  isActive: boolean("is_active").default(true).notNull(),
+  emailVerified: boolean("email_verified").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const books = pgTable("books", {
@@ -71,8 +77,41 @@ export const subscriptions = pgTable("subscriptions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id).notNull(),
   plan: text("plan").notNull(), // lite, pro, agency
-  credits: integer("credits").default(0).notNull(),
-  isActive: text("is_active").default("true").notNull(),
+  status: text("status").default("active").notNull(), // active, cancelled, expired
+  priceId: text("price_id"), // Stripe price ID
+  subscriptionId: text("subscription_id"), // External subscription ID
+  currentPeriodStart: timestamp("current_period_start"),
+  currentPeriodEnd: timestamp("current_period_end"),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Sessions table for authentication
+export const sessions = pgTable("sessions", {
+  sid: varchar("sid").primaryKey(),
+  sess: jsonb("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
+
+// Admin configurations for AI prompts
+export const adminConfigs = pgTable("admin_configs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  configKey: text("config_key").notNull().unique(),
+  configValue: jsonb("config_value").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Credit usage tracking
+export const creditUsage = pgTable("credit_usage", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  action: text("action").notNull(), // generate_chapters, export_book, etc.
+  creditsUsed: integer("credits_used").default(1).notNull(),
+  bookId: varchar("book_id").references(() => books.id),
+  metadata: jsonb("metadata"), // Additional context
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -112,10 +151,22 @@ export const subscriptionsRelations = relations(subscriptions, ({ one }) => ({
   }),
 }));
 
+export const creditUsageRelations = relations(creditUsage, ({ one }) => ({
+  user: one(users, {
+    fields: [creditUsage.userId],
+    references: [users.id],
+  }),
+  book: one(books, {
+    fields: [creditUsage.bookId],
+    references: [books.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
 });
 
 export const insertBookSchema = createInsertSchema(books).omit({
@@ -139,6 +190,37 @@ export const insertBookProgressSchema = createInsertSchema(bookProgress).omit({
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
   id: true,
   createdAt: true,
+  updatedAt: true,
+});
+
+export const insertAdminConfigSchema = createInsertSchema(adminConfigs).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCreditUsageSchema = createInsertSchema(creditUsage).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Auth schemas
+export const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const signupSchema = z.object({
+  username: z.string().min(3).max(50),
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const updateUserSchema = z.object({
+  username: z.string().min(3).max(50).optional(),
+  email: z.string().email().optional(),
+  role: z.enum(["admin", "free", "subscribed"]).optional(),
+  credits: z.number().int().min(0).optional(),
 });
 
 // Types
@@ -152,3 +234,10 @@ export type BookProgress = typeof bookProgress.$inferSelect;
 export type InsertBookProgress = z.infer<typeof insertBookProgressSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type AdminConfig = typeof adminConfigs.$inferSelect;
+export type InsertAdminConfig = z.infer<typeof insertAdminConfigSchema>;
+export type CreditUsage = typeof creditUsage.$inferSelect;
+export type InsertCreditUsage = z.infer<typeof insertCreditUsageSchema>;
+export type LoginData = z.infer<typeof loginSchema>;
+export type SignupData = z.infer<typeof signupSchema>;
+export type UpdateUserData = z.infer<typeof updateUserSchema>;

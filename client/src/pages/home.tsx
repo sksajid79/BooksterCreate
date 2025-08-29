@@ -22,13 +22,13 @@ function CTASection() {
           Join thousands of authors who've transformed their knowledge into professional e-books
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link href="/create-book">
+          <Link href="/auth">
             <Button 
               size="lg" 
               className="bg-white text-primary hover:bg-gray-100 transition-colors shadow-lg"
               data-testid="button-cta-start"
             >
-              Start Creating Now
+              Get Started Free
               <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
           </Link>

@@ -3,7 +3,10 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { generateChapters, regenerateChapter } from "./anthropic.js";
 import { exportToPDF, exportToHTML, exportToMarkdown, exportToEPUB, exportToDOCX } from "./exportGenerator.js";
-import { insertBookSchema, insertChapterSchema, insertBookProgressSchema } from "@shared/schema";
+import { insertBookSchema, insertChapterSchema, insertBookProgressSchema, loginSchema, signupSchema } from "@shared/schema";
+import { authenticateToken, requireAdmin, requireCredits, generateToken, type AuthRequest } from "./auth";
+import { db } from "./db";
+import { users } from "@shared/schema";
 import path from "path";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -12,25 +15,198 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ status: "ok" });
   });
 
+  // Authentication routes
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { username, email, password } = signupSchema.parse(req.body);
+      
+      // Check if user already exists
+      const existingUserByEmail = await storage.getUserByEmail(email);
+      if (existingUserByEmail) {
+        return res.status(400).json({ error: "Email already registered" });
+      }
+      
+      const existingUserByUsername = await storage.getUserByUsername(username);
+      if (existingUserByUsername) {
+        return res.status(400).json({ error: "Username already taken" });
+      }
+      
+      // Create new user
+      const user = await storage.createUser({
+        username,
+        email,
+        password,
+        role: "free",
+        credits: 1,
+      });
+      
+      const token = generateToken(user.id);
+      
+      // Don't send password back
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.status(201).json({
+        user: userWithoutPassword,
+        token,
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Signup failed",
+      });
+    }
+  });
+
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { email, password } = loginSchema.parse(req.body);
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const validPassword = await storage.validatePassword(password, user.password);
+      if (!validPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      if (!user.isActive) {
+        return res.status(401).json({ error: "Account is deactivated" });
+      }
+      
+      const token = generateToken(user.id);
+      
+      // Don't send password back
+      const { password: _, ...userWithoutPassword } = user;
+      
+      res.json({
+        user: userWithoutPassword,
+        token,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Login failed",
+      });
+    }
+  });
+
+  app.get("/api/auth/me", authenticateToken, async (req: AuthRequest, res) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      // Get fresh user data
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Get user error:", error);
+      res.status(500).json({ error: "Failed to get user data" });
+    }
+  });
+
+  app.post("/api/auth/logout", authenticateToken, (req: AuthRequest, res) => {
+    // For JWT, logout is handled client-side by removing the token
+    res.json({ message: "Logged out successfully" });
+  });
+
+  // Admin routes
+  app.get("/api/admin/configs", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const configs = await storage.getAllAdminConfigs();
+      res.json(configs);
+    } catch (error) {
+      console.error("Admin configs fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch admin configurations" });
+    }
+  });
+
+  app.post("/api/admin/configs", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const configData = req.body;
+      const config = await storage.setAdminConfig(configData);
+      res.json(config);
+    } catch (error) {
+      console.error("Admin config save error:", error);
+      res.status(500).json({ error: "Failed to save admin configuration" });
+    }
+  });
+
+  app.get("/api/admin/users", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      // Get all users for admin management
+      const users = await db.select({
+        id: users.id,
+        username: users.username,
+        email: users.email,
+        role: users.role,
+        credits: users.credits,
+        isActive: users.isActive,
+        emailVerified: users.emailVerified,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      }).from(users);
+      res.json(users);
+    } catch (error) {
+      console.error("Admin users fetch error:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  app.put("/api/admin/users/:id", authenticateToken, requireAdmin, async (req: AuthRequest, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const user = await storage.updateUser(id, updates);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      const { password: _, ...userWithoutPassword } = user;
+      res.json(userWithoutPassword);
+    } catch (error) {
+      console.error("Admin user update error:", error);
+      res.status(500).json({ error: "Failed to update user" });
+    }
+  });
+
   // Book CRUD operations
-  app.post("/api/books", async (req, res) => {
+  app.post("/api/books", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const bookData = insertBookSchema.parse(req.body);
       
-      // Ensure default user exists
-      let user = await storage.getUserByUsername('temp-user');
-      if (!user) {
-        user = await storage.createUser({
-          username: 'temp-user',
-          email: 'temp@example.com',
-          password: 'temp-password'
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+      
+      // Check credits (admin users have unlimited)
+      if (req.user.role !== "admin" && req.user.credits < 1) {
+        return res.status(402).json({ 
+          error: "Insufficient credits",
+          required: 1,
+          available: req.user.credits,
         });
+      }
+      
+      // Deduct credit before creating book (unless admin)
+      if (req.user.role !== "admin") {
+        const creditDeducted = await storage.deductCredits(req.user.id, 1, "create_book");
+        if (!creditDeducted) {
+          return res.status(402).json({ error: "Failed to deduct credits" });
+        }
       }
       
       const book = await storage.createBook({
         ...bookData,
-        userId: user.id
+        userId: req.user.id
       });
+      
       res.json(book);
     } catch (error) {
       console.error('Book creation error:', error);
@@ -40,11 +216,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/books/:id", async (req, res) => {
+  app.get("/api/books/:id", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const book = await storage.getBook(req.params.id);
       if (!book) {
         return res.status(404).json({ error: "Book not found" });
+      }
+      
+      // Check if user owns this book or is admin
+      if (book.userId !== req.user?.id && req.user?.role !== "admin") {
+        return res.status(403).json({ error: "Access denied" });
       }
       
       // Get chapters and progress as well
@@ -168,8 +349,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Generate chapters for a book
-  app.post("/api/chapters/generate", async (req, res) => {
+  app.post("/api/chapters/generate", authenticateToken, async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      // Check credits for AI generation (costs 1 credit)
+      if (req.user.role !== "admin" && req.user.credits < 1) {
+        return res.status(402).json({ 
+          error: "Insufficient credits for AI generation",
+          required: 1,
+          available: req.user.credits,
+        });
+      }
+
       const bookDetails = req.body;
       
       if (!bookDetails.title || !bookDetails.description) {
@@ -179,6 +373,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const chapters = await generateChapters(bookDetails);
+      
+      // Deduct credit after successful generation (unless admin)
+      if (req.user.role !== "admin") {
+        await storage.deductCredits(req.user.id, 1, "generate_chapters", bookDetails.bookId);
+      }
+      
       res.json({ chapters });
     } catch (error) {
       console.error('Chapter generation error:', error);
@@ -189,8 +389,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Regenerate a specific chapter
-  app.post("/api/chapters/regenerate", async (req, res) => {
+  app.post("/api/chapters/regenerate", authenticateToken, async (req: AuthRequest, res) => {
     try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Authentication required" });
+      }
+
+      // Check credits for regeneration (costs 1 credit)
+      if (req.user.role !== "admin" && req.user.credits < 1) {
+        return res.status(402).json({ 
+          error: "Insufficient credits for chapter regeneration",
+          required: 1,
+          available: req.user.credits,
+        });
+      }
+
       const { chapterTitle, bookDetails } = req.body;
       
       if (!chapterTitle || !bookDetails) {
@@ -200,6 +413,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const content = await regenerateChapter(chapterTitle, bookDetails);
+      
+      // Deduct credit after successful regeneration (unless admin)
+      if (req.user.role !== "admin") {
+        await storage.deductCredits(req.user.id, 1, "regenerate_chapter", bookDetails.bookId);
+      }
+      
       res.json({ content });
     } catch (error) {
       console.error('Chapter regeneration error:', error);
@@ -210,7 +429,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Export book in different formats
-  app.post("/api/export/:format", async (req, res) => {
+  app.post("/api/export/:format", authenticateToken, async (req: AuthRequest, res) => {
     try {
       const { format } = req.params;
       const bookData = req.body;

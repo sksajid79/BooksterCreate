@@ -1,13 +1,18 @@
-import type { User, InsertUser, Book, InsertBook, Chapter, InsertChapter, BookProgress, InsertBookProgress, Subscription, InsertSubscription } from "@shared/schema";
+import type { User, InsertUser, Book, InsertBook, Chapter, InsertChapter, BookProgress, InsertBookProgress, Subscription, InsertSubscription, AdminConfig, InsertAdminConfig, CreditUsage, InsertCreditUsage, UpdateUserData } from "@shared/schema";
 import { db } from "./db";
-import { users, books, chapters, bookProgress, subscriptions } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { users, books, chapters, bookProgress, subscriptions, adminConfigs, creditUsage } from "@shared/schema";
+import { eq, and, sql, desc } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 
 export interface IStorage {
   // User methods
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  updateUser(id: string, updates: UpdateUserData): Promise<User | undefined>;
+  validatePassword(password: string, hashedPassword: string): Promise<boolean>;
+  hashPassword(password: string): Promise<string>;
 
   // Book methods
   createBook(book: InsertBook): Promise<Book>;
@@ -30,6 +35,18 @@ export interface IStorage {
   // Subscription methods
   createSubscription(subscription: InsertSubscription): Promise<Subscription>;
   getUserSubscription(userId: string): Promise<Subscription | undefined>;
+  updateSubscription(userId: string, updates: Partial<Subscription>): Promise<Subscription | undefined>;
+
+  // Admin config methods
+  getAdminConfig(key: string): Promise<AdminConfig | undefined>;
+  setAdminConfig(config: InsertAdminConfig): Promise<AdminConfig>;
+  getAllAdminConfigs(): Promise<AdminConfig[]>;
+
+  // Credit usage methods
+  logCreditUsage(usage: InsertCreditUsage): Promise<CreditUsage>;
+  getUserCreditUsage(userId: string): Promise<CreditUsage[]>;
+  deductCredits(userId: string, amount: number, action: string, bookId?: string): Promise<boolean>;
+  resetMonthlyCredits(userId: string): Promise<User | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -44,12 +61,43 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user || undefined;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
+    // Hash password before storing
+    const hashedPassword = await this.hashPassword(insertUser.password);
     const [user] = await db
       .insert(users)
-      .values(insertUser)
+      .values({
+        ...insertUser,
+        password: hashedPassword,
+        creditsResetDate: new Date(),
+      })
       .returning();
     return user;
+  }
+
+  async updateUser(id: string, updates: UpdateUserData): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, id))
+      .returning();
+    return user || undefined;
+  }
+
+  async validatePassword(password: string, hashedPassword: string): Promise<boolean> {
+    return bcrypt.compare(password, hashedPassword);
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 12);
   }
 
   // Book methods
@@ -191,8 +239,125 @@ export class DatabaseStorage implements IStorage {
     const [subscription] = await db
       .select()
       .from(subscriptions)
-      .where(eq(subscriptions.userId, userId));
+      .where(eq(subscriptions.userId, userId))
+      .orderBy(desc(subscriptions.createdAt));
     return subscription || undefined;
+  }
+
+  async updateSubscription(userId: string, updates: Partial<Subscription>): Promise<Subscription | undefined> {
+    const [subscription] = await db
+      .update(subscriptions)
+      .set({
+        ...updates,
+        updatedAt: new Date(),
+      })
+      .where(eq(subscriptions.userId, userId))
+      .returning();
+    return subscription || undefined;
+  }
+
+  // Admin config methods
+  async getAdminConfig(key: string): Promise<AdminConfig | undefined> {
+    const [config] = await db
+      .select()
+      .from(adminConfigs)
+      .where(eq(adminConfigs.configKey, key));
+    return config || undefined;
+  }
+
+  async setAdminConfig(insertConfig: InsertAdminConfig): Promise<AdminConfig> {
+    // Try to update existing config first
+    const existing = await this.getAdminConfig(insertConfig.configKey);
+    
+    if (existing) {
+      const [config] = await db
+        .update(adminConfigs)
+        .set({
+          ...insertConfig,
+          updatedAt: new Date(),
+        })
+        .where(eq(adminConfigs.configKey, insertConfig.configKey))
+        .returning();
+      return config;
+    } else {
+      const [config] = await db
+        .insert(adminConfigs)
+        .values(insertConfig)
+        .returning();
+      return config;
+    }
+  }
+
+  async getAllAdminConfigs(): Promise<AdminConfig[]> {
+    return await db.select().from(adminConfigs).orderBy(adminConfigs.configKey);
+  }
+
+  // Credit usage methods
+  async logCreditUsage(insertUsage: InsertCreditUsage): Promise<CreditUsage> {
+    const [usage] = await db
+      .insert(creditUsage)
+      .values(insertUsage)
+      .returning();
+    return usage;
+  }
+
+  async getUserCreditUsage(userId: string): Promise<CreditUsage[]> {
+    return await db
+      .select()
+      .from(creditUsage)
+      .where(eq(creditUsage.userId, userId))
+      .orderBy(desc(creditUsage.createdAt));
+  }
+
+  async deductCredits(userId: string, amount: number, action: string, bookId?: string): Promise<boolean> {
+    const user = await this.getUser(userId);
+    if (!user || user.credits < amount) {
+      return false;
+    }
+
+    // Deduct credits from user
+    await db
+      .update(users)
+      .set({ 
+        credits: user.credits - amount,
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId));
+
+    // Log the usage
+    await this.logCreditUsage({
+      userId,
+      action,
+      creditsUsed: amount,
+      bookId,
+      metadata: { remainingCredits: user.credits - amount },
+    });
+
+    return true;
+  }
+
+  async resetMonthlyCredits(userId: string): Promise<User | undefined> {
+    const user = await this.getUser(userId);
+    if (!user) return undefined;
+
+    let newCredits = 1; // Default for free users
+    if (user.role === "subscribed") {
+      newCredits = 10; // Monthly credits for subscribed users
+    } else if (user.role === "admin") {
+      newCredits = 999; // Unlimited credits for admin
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        credits: newCredits,
+        creditsResetDate: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+
+    return updatedUser || undefined;
   }
 }
 
