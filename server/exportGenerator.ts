@@ -51,12 +51,24 @@ function removeDuplicateChapterTitle(content: string, chapterTitle: string): str
   
   let linesToRemove = [];
   
+  // Normalize function to handle quote/apostrophe variations
+  const normalize = (text: string) => text.replace(/[''""]/g, "'").replace(/[""]/g, '"').trim();
+  const normalizedTitle = normalize(cleanTitle);
+  
   // Check the first several lines for duplicate titles
   for (let i = 0; i < Math.min(5, lines.length); i++) {
     const line = lines[i].trim();
+    const normalizedLine = normalize(line);
     
     // Check for exact matches or markdown-style matches
-    if (line === cleanTitle || 
+    if (normalizedLine === normalizedTitle || 
+        normalizedLine === `# ${normalizedTitle}` ||
+        normalizedLine === `## ${normalizedTitle}` ||
+        normalizedLine === `### ${normalizedTitle}` ||
+        normalizedLine === `#### ${normalizedTitle}` ||
+        normalizedLine === `##### ${normalizedTitle}` ||
+        normalizedLine === `###### ${normalizedTitle}` ||
+        line === cleanTitle || 
         line === `# ${cleanTitle}` ||
         line === `## ${cleanTitle}` ||
         line === `### ${cleanTitle}` ||
