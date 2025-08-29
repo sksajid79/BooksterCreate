@@ -3,7 +3,8 @@ import { Request, Response, NextFunction } from "express";
 import { storage } from "./storage";
 import { User } from "@shared/schema";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-change-in-production";
+// Support both JWT_SECRET and SESSION_SECRET for deployment compatibility
+const JWT_SECRET = process.env.JWT_SECRET || process.env.SESSION_SECRET || "your-super-secret-jwt-key-change-in-production";
 const JWT_EXPIRES_IN = "7d";
 
 export interface AuthRequest extends Request {
