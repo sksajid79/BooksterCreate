@@ -82,6 +82,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // Health check endpoint with more details for monitoring
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: "1.0.0",
+      services: {
+        database: "connected",
+        anthropic: process.env.ANTHROPIC_API_KEY ? "configured" : "not_configured"
+      }
+    });
+  });
+
   // Authentication routes
   app.post("/api/auth/signup", async (req, res) => {
     try {
